@@ -1,8 +1,8 @@
 # Changelog
 
-## 0.1.0-rc2 — 2026-08-27
+## 0.1.0 — 2026-08-27
 
-Release-preparation candidate. No solver feature expansion relative to rc1.
+Initial public release. No solver feature expansion relative to rc1.
 
 - Added final README, installation guide, user guide, and example index.
 - Added optional AI-agent skill for declarative EqAnnotate usage.

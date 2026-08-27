@@ -119,7 +119,7 @@ Manual annotations still inherit the current theme/callout style and reserve art
 
 ## Compatibility
 
-The current release candidate has been exercised with:
+The current release has been exercised with:
 
 - pdfLaTeX and LuaLaTeX full regression suites;
 - selected XeLaTeX coverage and `unicode-math`;
