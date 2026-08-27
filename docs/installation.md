@@ -1,32 +1,16 @@
 # Installation
 
-EqAnnotate is currently distributed as a source package. It is not yet published on CTAN.
+## Overleaf or a local project
 
-## Overleaf
-
-1. Download `eqannotate.sty`.
-2. Upload it to the root of the Overleaf project, next to `main.tex`.
-3. Add:
+1. Download [`eqannotate.sty` from the latest GitHub Release](https://github.com/intelland/eqannotate/releases/latest/download/eqannotate.sty).
+2. Upload or copy it to the project root next to `main.tex`.
+3. Load it normally:
 
 ```latex
 \usepackage{eqannotate}
 ```
 
-No shell escape, Python process, external service, or API key is required.
-
-## Per-project local install
-
-```text
-paper/
-├── main.tex
-└── eqannotate.sty
-```
-
-Then load it normally:
-
-```latex
-\usepackage{eqannotate}
-```
+EqAnnotate is not yet published on CTAN. No shell escape, Python process, external service, or API key is required.
 
 ## User-wide TeX Live install
 
@@ -39,43 +23,16 @@ Most TeX Live setups discover the user tree automatically. If yours does not, re
 
 ## Dependencies
 
-EqAnnotate loads `amsmath`, `xcolor`, `tikz`, `xparse`, and `expl3`, plus TikZ libraries `tikzmark`, `arrows.meta`, and `calc`.
+EqAnnotate loads `amsmath`, `xcolor`, `tikz`, `xparse`, and `expl3`, plus the TikZ libraries `tikzmark`, `arrows.meta`, and `calc`.
 
 ## Compilation
-
-Recommended:
 
 ```bash
 latexmk -pdf main.tex
 ```
 
-LuaLaTeX:
+LuaLaTeX and XeLaTeX can be selected with `latexmk -lualatex` and `latexmk -xelatex`. A fresh document commonly needs several TeX runs because EqAnnotate combines remembered page positions with `.aux`-based solved spacing.
 
-```bash
-latexmk -lualatex main.tex
-```
+## Optional agent skill
 
-XeLaTeX:
-
-```bash
-latexmk -xelatex main.tex
-```
-
-A fresh document commonly needs several TeX runs because EqAnnotate combines remembered page positions with `.aux`-based solved spacing.
-
-## Optional AI-agent skill
-
-The package works without any agent integration. The repository includes:
-
-```text
-skills/eqannotate/SKILL.md
-```
-
-For a Codex-style filesystem skill installation:
-
-```bash
-mkdir -p ~/.agents/skills/eqannotate
-cp skills/eqannotate/SKILL.md ~/.agents/skills/eqannotate/SKILL.md
-```
-
-The skill contains instructions only; it does not call a model or API.
+The package works without any agent integration. The repository includes [skills/eqannotate/SKILL.md](../skills/eqannotate/SKILL.md), an instruction-only guide for Codex-style workflows.

@@ -15,15 +15,12 @@
 5. Verify no generated `.aux`, `.log`, `.pdf`, `.fls`, `.fdb_latexmk`, or similar build files are tracked.
 6. Verify GitHub Actions CI is green on the release commit.
 
-## v0.1.0 activation
+## GitHub Release asset rule
 
-1. Change the package header from `v0.1.0-rcN` to `v0.1.0`.
-2. Finalize the CHANGELOG entry.
-3. Rerun all gates without adding solver behavior.
-4. Commit, tag `v0.1.0`, and create the GitHub Release.
+Every GitHub Release must include a standalone `eqannotate.sty` asset extracted from the exact release tag. Never upload the current `main` copy to an older release: it may contain later development or bug-fix changes.
 
-If a functional bug appears, fix it in a new release candidate rather than mixing the fix into release activation.
+For example, extract `eqannotate.sty` from the release tag, upload that file to the matching GitHub Release, and verify its package header/version before publishing the release.
 
 ## CTAN
 
-CTAN packaging is intentionally deferred until after the GitHub v0.1.0 release has had a short period of real-world use.
+CTAN packaging is intentionally deferred until after the GitHub release has had a period of real-world use.
