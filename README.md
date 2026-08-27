@@ -4,7 +4,7 @@
 
 > Tell EqAnnotate what to label, not where to put the label.
 
-EqAnnotate is a low-configuration LaTeX package for annotated display equations. Mark a mathematical term, declare its label, and let the package handle placement, spacing, de-overlap, column bounds, lane allocation, and connector routing.
+EqAnnotate is a self-layouting LaTeX package for annotated display equations. Mark a mathematical term, declare its label, and let the package handle placement, spacing, de-overlap, column bounds, lane allocation, and connector routing.
 
 ```latex
 \begin{annotatedequation}
@@ -23,21 +23,30 @@ p(x)=
 
 ## Why EqAnnotate?
 
-TikZ-based equation annotations are flexible, but that flexibility also makes the caller solve a 2D layout problem: anchors, offsets, lanes, and connector paths. EqAnnotate makes the common path declarative.
+EqAnnotate is built on the equation-annotation workflow introduced by [`annotate-equations`](https://github.com/st--/annotate-equations): mark a term in the equation, attach a callout, and render it with TikZ.
+
+`annotate-equations` provides concise primitives for manual equation annotation. The caller still chooses the side, offset, and other spatial details, for example:
+
+```latex
+\eqnmarkbox[blue]{velocity}{v_\theta(x,t)}
+\annotate[yshift=1em]{above}{velocity}{Velocity field}
+```
+
+EqAnnotate keeps the same basic idea but moves the common path one level higher:
 
 ```latex
 \eqmark[blue]{velocity}{v_\theta(x,t)}
 \eqannotate{velocity}{Velocity field}
 ```
 
-The automatic solver measures the equation and labels, chooses above/below placement, respects the active `\linewidth`, performs bounded horizontal de-overlap, opens extra lanes only when needed, reserves vertical space, and routes connectors outside the formula.
+The difference is simple: **EqAnnotate asks the caller to decide less.** The package measures the equation and labels, chooses placement, respects the active `\linewidth`, moves labels horizontally when needed, opens extra lanes only when necessary, reserves article space, and routes connectors outside the formula.
 
-For difficult cases, a manual escape hatch remains available:
+That makes the interface useful in two ways:
 
-```latex
-\eqannotatemanual[xshift=12mm,yshift=10mm][bend right=18]
-  {velocity}{Velocity field}
-```
+- **For people:** annotation code becomes shorter and easier to maintain because the common case no longer requires hand-tuning anchors, offsets, lanes, or connector paths.
+- **For coding and writing agents:** the task is shifted away from fragile 2D layout decisions and toward semantic declarations such as “this term is the velocity field.” LLM-based agents are typically much stronger at understanding and manipulating language and symbolic structure than at repeatedly tuning visual coordinates. Reducing the spatial degrees of freedom therefore makes generated LaTeX more consistent and less error-prone.
+
+In normal use, both humans and agents only specify **what** a term means. EqAnnotate decides **where** the annotation should go. When a particular formula needs exact spatial control, the same package keeps a manual interface.
 
 ## Install
 
@@ -93,9 +102,9 @@ annotatedmultline
 
 Each accepts optional `[numbered]`. `annotatedalign` and `annotatedgather` use one number for the whole block; `annotatedmultline` follows amsmath `multline`'s one-number model.
 
-See the [User Guide](docs/usage.md) for numbering, multi-line equations, manual fallback, themes, warnings, and limitations.
+See the [User Guide](docs/usage.md) for numbering, multi-line equations, manual placement, themes, diagnostics, and examples.
 
-## Automatic layout features
+## Automatic layout
 
 - equation- and term-aware above/below placement;
 - real label measurement and automatic long-label wrapping;
@@ -108,51 +117,78 @@ See the [User Guide](docs/usage.md) for numbering, multi-line equations, manual 
 - connector masking behind annotation labels;
 - independent `colorful` / `mono` and `leader` / `arrow` style axes.
 
-## Manual fallback
+## Manual control
+
+For a formula that benefits from exact positioning, switch only that annotation to the manual interface:
 
 ```latex
-\eqannotatemanual[<label TikZ options>][<to-path options>]
-  {<id>}{<label>}
+\eqannotatemanual[xshift=12mm,yshift=10mm][bend right=18]
+  {velocity}{Velocity field}
 ```
 
-Manual annotations still inherit the current theme/callout style and reserve article space. They deliberately bypass automatic collision avoidance, column clamping, lane assignment, and crossing optimization.
+Manual annotations keep the active theme, callout style, label masking, and article-space reservation while giving direct TikZ control over label placement and connector shape.
 
 ## Compatibility
 
-The current release has been exercised with:
+EqAnnotate is covered by regression tests across:
 
-- pdfLaTeX and LuaLaTeX full regression suites;
+- pdfLaTeX and LuaLaTeX full suites;
 - selected XeLaTeX coverage and `unicode-math`;
 - `IEEEtran`, `acmart`, `revtex4-2`, `elsarticle`, and `beamer`;
 - single-column, two-column, `fleqn` / `leqno`, `hyperref` / `cleveref`, and local-width contexts;
-- full article-flow fixtures with prose, floats, references, page boundaries, automatic placement, and manual fallback.
+- full article-flow fixtures with prose, floats, references, page boundaries, automatic placement, and manual placement.
 
 See [Compatibility Results](tests/compatibility/RESULTS.md) and the [RC Audit](docs/rc-audit.md).
 
-## v0.1 boundaries
+## Roadmap
 
-EqAnnotate v0.1 intentionally does **not** implement:
+- [ ] Inline-math annotations
+- [ ] Per-row numbering for aligned/gathered multi-line equations
+- [ ] Custom `\tag` support
+- [ ] `\intertext` / `\shortintertext` inside EqAnnotate multi-line wrappers
+- [ ] Automatic page-background detection for annotation masking
+- [ ] CTAN distribution
 
-- inline-math annotations;
-- native per-row numbering semantics of `align` / `gather`;
-- arbitrary custom `\tag` behavior;
-- `\intertext` / `\shortintertext` inside EqAnnotate multi-line wrappers;
-- automatic detection of non-white page backgrounds.
+For a colored page today, set `\eqannotatebackgroundcolor` to the page color.
 
-For non-white pages, set `\eqannotatebackgroundcolor` to the page color.
+## Agent-based LaTeX workflows
 
-## Optional AI-agent skill
+EqAnnotate is especially well suited to agent-based projects. Instead of asking an agent to invent TikZ coordinates or repeatedly adjust `xshift`, `yshift`, anchors, and route geometry, the agent can emit a small semantic interface:
 
-The repository includes a small optional skill at [`skills/eqannotate/SKILL.md`](skills/eqannotate/SKILL.md). It teaches coding/writing agents to prefer EqAnnotate's declarative automatic path, compile to convergence, and use manual placement only as a fallback rather than inventing raw TikZ coordinates.
+```latex
+\eqmark[blue]{velocity}{v_\theta(x,t)}
+\eqannotate{velocity}{Velocity field}
+```
 
-EqAnnotate itself has no AI, network, Python, or API dependency.
+This matches the strengths of LLM-based coding agents: interpreting natural-language intent, identifying symbolic subexpressions, and producing structured text. EqAnnotate takes over the spatial layout that is harder for an agent to reason about reliably. The result is a smaller decision space, more reproducible output, and fewer layout mistakes.
 
-## Related work
+The repository also ships an optional skill at [`skills/eqannotate/SKILL.md`](skills/eqannotate/SKILL.md). It teaches coding/writing agents to:
 
-- [`annotate-equations`](https://github.com/st--/annotate-equations) provides convenient TikZ-based primitives for manually positioned equation annotations.
-- [`ScholarPhi`](https://github.com/allenai/scholarphi) includes reader-side automatic equation diagrams and is useful engineering prior art for separating label measurement, placement, and leader routing.
+- prefer the declarative automatic path;
+- compile until layout converges;
+- use `prefer=above|below` only as a lightweight hint;
+- switch to the manual interface only for genuinely difficult cases;
+- avoid generating raw TikZ coordinates for ordinary equation annotations.
 
-EqAnnotate focuses on **author-side LaTeX source** with a deliberately constrained declarative API, automatic self-layout, and a manual fallback.
+EqAnnotate itself remains a regular LaTeX/TikZ package; the skill is simply a ready-to-use interface guide for agent workflows.
+
+## Documentation
+
+- [Installation](docs/installation.md)
+- [User Guide](docs/usage.md)
+- [Public API Contract](docs/api-contract.md)
+- [Layout Design](docs/layout.md)
+- [Validation](docs/validation.md)
+
+## Acknowledgements
+
+EqAnnotate grows directly from earlier work on making mathematical notation easier to explain visually:
+
+- [`annotate-equations`](https://github.com/st--/annotate-equations) by ST John is the main foundation for EqAnnotate's author-side equation-annotation workflow. EqAnnotate keeps the idea of marking equation terms and attaching TikZ callouts, then adds automatic self-layout as the default interaction.
+- [`annotated_latex_equations`](https://github.com/synercys/annotated_latex_equations) by synercys demonstrated the colorful annotated-equation style in LaTeX/TikZ and inspired the package ecosystem around this use case.
+- [`ScholarPhi`](https://github.com/allenai/scholarphi) was an engineering reference for automatic equation diagrams, especially the separation of label measurement, placement, and leader routing.
+
+EqAnnotate also relies on the LaTeX ecosystem around `amsmath`, PGF/TikZ, and `tikzmark`.
 
 ## Development
 

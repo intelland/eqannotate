@@ -1,13 +1,15 @@
 # EqAnnotate User Guide
 
-EqAnnotate is a declarative package for annotated **display equations**. The normal workflow is:
+EqAnnotate is a declarative package for annotated **display equations**. It is built on the equation-annotation workflow of [`annotate-equations`](https://github.com/st--/annotate-equations), with automatic self-layout as the default interaction.
+
+The normal workflow is:
 
 1. choose an EqAnnotate display wrapper;
 2. wrap target subexpressions with `\eqmark`;
 3. declare labels with `\eqannotate`;
 4. compile until positions stabilize.
 
-The automatic path intentionally does not expose per-label coordinates, anchors, lane numbers, or route-track IDs.
+The automatic interface stays detail-free: no per-label coordinates, anchors, lane numbers, or route-track IDs are needed. This is convenient for human authors and particularly useful for coding/writing agents, because the agent can operate on semantic labels and symbolic LaTeX instead of solving a separate 2D placement problem.
 
 ## Minimal example
 
@@ -33,9 +35,9 @@ p(x)=
 \eqmark[<color>]{<id>}{<math>}
 ```
 
-The ID is semantic and local to one EqAnnotate display. Common punctuation such as `.`, `:`, `_`, `-`, and `/` is supported. IDs must be unique within the display; a duplicate mark produces a warning and keeps the first target.
+The ID is semantic and local to one EqAnnotate display. Common punctuation such as `.`, `:`, `_`, `-`, and `/` is supported. IDs are unique within the display; when an ID is repeated, EqAnnotate reports it and keeps the first target.
 
-The optional color is used by the `colorful` theme. In `mono`, the mathematical term remains visually unhighlighted.
+The optional color is used by the `colorful` theme. In `mono`, the mathematical term is shown without a colored background.
 
 ## Automatic annotations
 
@@ -52,7 +54,21 @@ A soft side preference is available:
 \eqannotate[prefer=below]{result}{Resulting field}
 ```
 
-These are preferences, not coordinates; automatic layout remains active.
+These preferences keep automatic layout active while expressing which side is preferred.
+
+
+## Agent-based workflows
+
+EqAnnotate is designed to keep the ordinary annotation interface semantic rather than geometric. A coding or writing agent only needs to identify the target term and provide the label:
+
+```latex
+\eqmark[blue]{velocity}{v_\theta(x,t)}
+\eqannotate{velocity}{Velocity field}
+```
+
+This avoids asking the agent to choose low-level TikZ details such as coordinates, anchors, lane numbers, or connector paths. In practice, LLM-based agents are generally more reliable at natural-language intent and symbolic code editing than at iterative visual-coordinate tuning, so the reduced layout decision space makes agent-generated annotations more consistent.
+
+For agent projects, the repository includes [`skills/eqannotate/SKILL.md`](../skills/eqannotate/SKILL.md). The skill instructs the agent to use automatic layout first, compile to convergence, use side preferences sparingly, and reserve manual placement for difficult formulas.
 
 ## Display environments
 
@@ -149,13 +165,13 @@ The four combinations can be switched without changing equation source or annota
 
 Long labels are automatically wrapped to a bounded fraction of the active local `\linewidth`. The resulting multi-line height participates in lane spacing and vertical space reservation.
 
-For dense equations, EqAnnotate first attempts bounded horizontal movement. It opens another lane only when the label cannot fit legally in an existing lane. Horizontal movement is bounded so labels are not moved arbitrarily far from their targets.
+For dense equations, EqAnnotate first attempts bounded horizontal movement. It opens another lane only when the label cannot fit in an existing lane. Horizontal movement is bounded so labels remain visually connected to their targets.
 
 The solver preserves target order where possible and uses separated routing micro-tracks when several connectors need horizontal motion.
 
-## Manual escape hatch
+## Manual control
 
-For an exceptional formula that automatic layout cannot express satisfactorily:
+For an equation that needs exact spatial control:
 
 ```latex
 \eqannotatemanual[<label TikZ options>][<to-path options>]
@@ -176,20 +192,15 @@ Examples:
 
 The first optional argument is passed to the label node; useful options include `xshift`, `yshift`, `anchor`, and `text width`. The second is passed to TikZ's `to[...]` path; examples include `bend left`, `bend right`, or `out` / `in`.
 
-Manual annotations:
+Manual annotations keep the active color theme, callout style, label masking, and vertical space reservation. The label position and connector route come directly from the options you provide.
 
-- inherit the active color theme and callout style;
-- participate in vertical space reservation;
-- use the same label masking behavior as automatic labels;
-- deliberately bypass automatic collision avoidance, column clamping, lane assignment, and crossing optimization.
-
-If a target has both automatic and manual declarations, manual placement wins with a warning.
+If a target has both automatic and manual declarations, manual placement takes precedence and EqAnnotate reports the overlap.
 
 ## Article and column integration
 
 EqAnnotate measures the active local `\linewidth`, so automatic layout adapts to single-column pages, two-column classes, and local-width contexts such as `minipage`.
 
-Automatic and manual labels both contribute to vertical space reservation. This is what allows annotation-heavy displays to coexist with continuous prose rather than simply overlaying the following paragraph.
+Automatic and manual labels both contribute to vertical space reservation, allowing annotated displays to sit naturally inside continuous prose.
 
 The regression corpus includes `article`, `IEEEtran`, `acmart`, `revtex4-2`, `elsarticle`, and `beamer` fixtures.
 
@@ -201,17 +212,15 @@ Recommended:
 latexmk -pdf main.tex
 ```
 
-EqAnnotate needs multiple passes because it combines TikZ remembered positions with `.aux`-based spacing. If compiling manually, rerun while the log contains:
+EqAnnotate uses TikZ remembered positions together with `.aux`-based solved spacing. If compiling manually, rerun while the log contains:
 
 ```text
 Rerun LaTeX for optimized annotation spacing
 ```
 
-This is expected during convergence.
-
 ## Diagnostics
 
-Controlled diagnostics include:
+EqAnnotate reports common authoring mistakes directly in the log:
 
 - annotation has no matching mark -> warning and skip;
 - duplicate mark ID -> warning, first target retained;
@@ -219,32 +228,31 @@ Controlled diagnostics include:
 - automatic and manual declaration for one target -> warning, manual wins;
 - `\eqmark`, `\eqannotate`, or `\eqannotatemanual` outside an EqAnnotate display -> explicit package error.
 
-## Non-white backgrounds
+## Colored page backgrounds
 
-Labels use a page-colored mask so connector segments passing beneath a label disappear rather than mixing with its text. v0.1 assumes a white page by default.
+Labels use a page-colored mask so connector segments passing beneath a label disappear rather than mixing with its text.
 
-For a different page color:
+For a colored page:
 
 ```latex
 \renewcommand\eqannotatebackgroundcolor{<color>}
 ```
 
-Automatic page-background detection is not implemented in v0.1.
+Automatic background detection is on the roadmap.
 
-## v0.1 limitations
+## Roadmap
 
-Deliberate non-goals:
-
-- inline-math annotations;
-- native per-row numbering for `align` / `gather`;
-- arbitrary custom `\tag` behavior;
-- `\intertext` / `\shortintertext` inside EqAnnotate multi-line wrappers;
-- automatic page-background detection.
+- [ ] Inline-math annotations
+- [ ] Per-row numbering for aligned/gathered multi-line equations
+- [ ] Custom `\tag` support
+- [ ] `\intertext` / `\shortintertext` inside EqAnnotate multi-line wrappers
+- [ ] Automatic page-background detection
+- [ ] CTAN distribution
 
 ## Choosing automatic vs manual
 
-Use automatic placement by default. It receives column awareness, wrapping, de-overlap, lane assignment, and routing optimization.
+Use `\eqannotate` for the default self-layouting path.
 
-Use `prefer=above|below` when only the side matters.
+Use `prefer=above|below` when you want to suggest a side while keeping the solver active.
 
-Use manual placement only when a difficult formula genuinely needs precise spatial control that the automatic solver cannot find.
+Use `\eqannotatemanual` when you want direct control over the final position or connector route.
