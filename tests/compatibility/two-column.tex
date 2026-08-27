@@ -1,0 +1,19 @@
+\documentclass[twocolumn]{article}
+\usepackage[margin=0.65in,columnsep=0.24in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{eqannotate}
+\begin{document}
+\section*{Two-column attention}
+\begin{annotatedequation}
+y=\eqmark[blue]{q}{Q}+\eqmark[orange]{k}{K}+\eqmark[green]{v}{V}
+\eqannotate{q}{Query representation}\eqannotate{k}{Key representation}\eqannotate{v}{Value representation}
+\end{annotatedequation}
+
+\section*{Two-column objective}
+\begin{annotatedequation}
+\mathcal L=\eqmark[cyan]{data}{\mathcal L_{\rm data}}+
+\lambda\eqmark[orange]{reg}{\mathcal L_{\rm reg}}+
+\gamma\eqmark[purple]{cons}{\mathcal L_{\rm cons}}
+\eqannotate{data}{Data fitting}\eqannotate{reg}{Regularization}\eqannotate{cons}{Consistency term}
+\end{annotatedequation}
+\end{document}

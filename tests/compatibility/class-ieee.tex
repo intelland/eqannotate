@@ -1,0 +1,18 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{amsmath}
+\usepackage{eqannotate}
+\begin{document}
+\title{EqAnnotate IEEE Smoke}\author{Anonymous}\maketitle
+\begin{annotatedequation}[numbered]
+y=\eqmark[blue]{base}{f_\theta(x)}+\lambda\eqmark[orange]{corr}{g(x)}\label{eq:ieee}
+\eqannotate{base}{Base predictor}\eqannotate{corr}{Correction}
+\end{annotatedequation}
+Reference~\ref{eq:ieee}.
+
+\begin{annotatedmultline}
+\eqmark[blue]{classml}{\mathcal L}=A+B+C\\
+{}+D+\eqmark[green]{classtail}{E+F}
+\eqannotate{classml}{Objective}
+\eqannotate{classtail}{Tail terms}
+\end{annotatedmultline}
+\end{document}

@@ -1,0 +1,56 @@
+\documentclass{article}
+\usepackage[a4paper,margin=23mm]{geometry}
+\usepackage{amssymb}
+\usepackage{eqannotate}
+\begin{document}
+\section*{EqAnnotate multi-line compatibility}
+
+\subsection*{Aligned block}
+\begin{annotatedalign}
+r_0 &= \eqmark[blue]{residual}{x_0-y},\\
+r_{k+1} &= r_k-\eqmark[orange]{update}{\alpha_k A p_k},\\
+x_{k+1} &= x_k+\eqmark[green]{step}{\alpha_kp_k}
+\eqannotate{residual}{Initial residual}
+\eqannotate{update}{Residual correction}
+\eqannotate{step}{State update}
+\end{annotatedalign}
+
+\subsection*{Gathered block}
+\begin{annotatedgather}[numbered]
+\eqmark[blue]{energy}{E(x)}=D(x)+R(x),\\
+\eqmark[orange]{grad}{\nabla E(x)}=\nabla D(x)+\nabla R(x),\\
+\eqmark[green]{flow}{\dot{x}_t}=-\nabla E(x_t)
+\eqannotate{energy}{Energy objective}
+\eqannotate{grad}{Objective gradient}
+\eqannotate{flow}{Gradient flow}
+\label{eq:gather-demo}
+\end{annotatedgather}
+Reference to the gathered block: Eq.~\ref{eq:gather-demo}.
+
+\subsection*{Multline-style long equation}
+\begin{annotatedmultline}[numbered]
+\eqmark[blue]{lhs}{\mathcal{L}(\theta)}
+= \mathbb{E}_{x\sim p_{\rm data}}\!\left[\ell_{\rm rec}(x;\theta)\right]
++ \lambda_1\mathbb{E}_{z\sim p(z)}\!\left[\ell_{\rm reg}(z;\theta)\right]\\
+{}+ \lambda_2\eqmark[orange]{cons}{\mathcal{L}_{\rm consistency}(\theta)}
++ \lambda_3\mathbb{E}_{t}\!\left[\|v_\theta(x_t,t)-u_t\|_2^2\right]
++ \eqmark[green]{prior}{\lambda_4\mathcal{R}_{\rm prior}(\theta)}
+\eqannotate{lhs}{Total training objective}
+\eqannotate{cons}{Consistency regularizer}
+\eqannotate{prior}{Prior regularization term}
+\label{eq:multline-demo}
+\end{annotatedmultline}
+Reference to the long block: Eq.~\ref{eq:multline-demo}.
+
+\subsection*{Mono + arrow on a gathered block}
+\eqannotatecolortheme{mono}
+\eqannotatecalloutstyle{arrow}
+\begin{annotatedgather}
+q=\eqmark{qterm}{W_qx},\\
+k=\eqmark{kterm}{W_kx},\\
+A=\operatorname{softmax}\!\left(\frac{qk^\top}{\sqrt d}\right)
+\eqannotate{qterm}{Query projection}
+\eqannotate{kterm}{Key projection}
+\end{annotatedgather}
+
+\end{document}

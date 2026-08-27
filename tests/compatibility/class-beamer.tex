@@ -1,0 +1,13 @@
+\documentclass{beamer}
+\usepackage{eqannotate}
+\begin{document}
+\begin{frame}{EqAnnotate beamer smoke test}
+Text before.
+\begin{annotatedequation}
+y=\eqmark[blue]{base}{f_\theta(x)}+\eqmark[orange]{corr}{\lambda g(x)}
+\eqannotate[prefer=above]{base}{Base model prediction}
+\eqannotate[prefer=below]{corr}{Correction term}
+\end{annotatedequation}
+Text after.
+\end{frame}
+\end{document}

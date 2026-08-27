@@ -1,0 +1,26 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{eqannotate}
+\begin{document}
+\section*{Basic}
+\begin{annotatedequation}
+p(x)=
+\frac{1}{\sqrt{2\pi}\eqmark[blue]{sigma}{\sigma}}
+\exp\left(-\frac{(x-\eqmark[yellow]{mu}{\mu})^2}{2\sigma^2}\right)
+\eqannotate{mu}{Mean}
+\eqannotate{sigma}{Scale}
+\end{annotatedequation}
+The labels should stay outside the full equation box.
+
+\section*{Dense}
+\begin{annotatedequation}
+\eqmark[cyan]{a}{v_\theta(x_t,t)}
++\lambda\eqmark[orange]{b}{g(x_t,t)}
++\eta\eqmark[purple]{c}{h_\phi(x_t,t)}
+=\eqmark[green]{d}{v_t(x_t)}
+\eqannotate{a}{Base velocity field}
+\eqannotate{b}{Correction}
+\eqannotate{c}{Auxiliary guidance term}
+\eqannotate{d}{Resulting field}
+\end{annotatedequation}
+\end{document}

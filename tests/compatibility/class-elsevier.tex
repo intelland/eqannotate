@@ -1,0 +1,17 @@
+\documentclass[preprint,12pt]{elsarticle}
+\usepackage{amsmath}
+\usepackage{eqannotate}
+\begin{document}
+\begin{frontmatter}\title{EqAnnotate Elsevier Smoke}\author{Anonymous}\end{frontmatter}
+\begin{annotatedequation}[numbered]
+J=\eqmark[blue]{data}{\|Ax-y\|_2^2}+\lambda\eqmark[orange]{prior}{R(x)}\label{eq:els}
+\eqannotate{data}{Data fidelity}\eqannotate{prior}{Prior}
+\end{annotatedequation}
+
+\begin{annotatedmultline}
+\eqmark[blue]{classml}{\mathcal L}=A+B+C\\
+{}+D+\eqmark[green]{classtail}{E+F}
+\eqannotate{classml}{Objective}
+\eqannotate{classtail}{Tail terms}
+\end{annotatedmultline}
+\end{document}

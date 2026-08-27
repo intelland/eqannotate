@@ -1,0 +1,14 @@
+\documentclass{article}
+\usepackage{eqannotate}
+\begin{document}
+\begin{annotatedequation}
+\eqmark[blue]{source.term}{a}
++\eqmark[orange]{bias:term}{b}
++\eqmark[green]{snake_case}{c}
++\eqmark[purple]{dash-id}{d}
+\eqannotate{source.term}{Dot ID}
+\eqannotate{bias:term}{Colon ID}
+\eqannotate{snake_case}{Underscore ID}
+\eqannotatemanual[yshift=-11mm][bend left=8]{dash-id}{Dash ID manual}
+\end{annotatedequation}
+\end{document}

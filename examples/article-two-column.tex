@@ -1,0 +1,44 @@
+\documentclass[10pt,twocolumn]{article}
+\usepackage[margin=18mm,columnsep=8mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{eqannotate}
+\title{EqAnnotate Two-Column Article Fixture}
+\author{Integration Test}
+\date{}
+\newcommand{\shorttext}{Two-column papers place strong horizontal constraints on equation callouts. The layout must use the local column width, wrap long labels, preserve readable connectors, and leave enough vertical space for surrounding prose.}
+\begin{document}
+\maketitle
+\section{Column Flow}
+\shorttext\ \shorttext
+\begin{annotatedequation}[numbered]
+y=\eqmark[blue]{base}{f_\theta(x)}+\eqmark[orange]{corr}{\lambda g(x)}
+\label{eq:twocol}
+\eqannotate{base}{Base prediction}
+\eqannotate{corr}{A correction term with a deliberately long explanation that must wrap within one column}
+\end{annotatedequation}
+Text after Eq.~\eqref{eq:twocol} should stay in the same column when space permits. \shorttext
+
+\section{Manual Fallback}
+\shorttext
+\eqannotatecolortheme{mono}
+\eqannotatecalloutstyle{arrow}
+\begin{annotatedequation}
+E=\eqmark[blue]{kinetic}{\frac12 mv^2}+\eqmark[orange]{potential}{V(x)}
+\eqannotate{kinetic}{Kinetic term}
+\eqannotatemanual[xshift=13mm,yshift=-14mm]{potential}{Manual potential term}
+\end{annotatedequation}
+\shorttext\ \shorttext
+
+\section{Dense Case}
+\eqannotatecolortheme{colorful}
+\eqannotatecalloutstyle{leader}
+\shorttext
+\begin{annotatedequation}
+S=\eqmark[blue]{a}{a}+\eqmark[orange]{b}{b}+\eqmark[green]{c}{c}+\eqmark[purple]{d}{d}
+\eqannotate{a}{First component}
+\eqannotate{b}{Second component}
+\eqannotate{c}{Third component}
+\eqannotate{d}{Fourth component}
+\end{annotatedequation}
+\shorttext\ \shorttext\ \shorttext\ \shorttext
+\end{document}

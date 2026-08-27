@@ -1,0 +1,31 @@
+\documentclass[twocolumn]{article}
+\usepackage[margin=0.7in,columnsep=0.25in]{geometry}
+\usepackage{eqannotate}
+\begin{document}
+\section*{Clustered terms}
+\begin{annotatedequation}
+F=\eqmark[blue]{a}{a}+\eqmark[red]{b}{b}+\eqmark[green]{c}{c}+\eqmark[orange]{d}{d}+\eqmark[purple]{e}{e}+\eqmark[cyan]{f}{f}
+\eqannotate{a}{First long label}
+\eqannotate{b}{Second label}
+\eqannotate{c}{Third long explanatory label}
+\eqannotate{d}{Fourth label}
+\eqannotate{e}{Fifth explanatory label}
+\eqannotate{f}{Sixth label}
+\end{annotatedequation}
+
+\section*{Geometry-driven sides}
+\begin{annotatedequation}
+q(x)=\frac{\eqmark[yellow]{num}{(x-\mu)^2}+\eqmark[cyan]{num2}{\alpha x}}{\eqmark[blue]{den}{2\sigma^2}+\eqmark[red]{den2}{\beta}}
+\eqannotate{num}{Squared residual}
+\eqannotate{num2}{Numerator term}
+\eqannotate{den}{Variance scale}
+\eqannotate{den2}{Denominator offset}
+\end{annotatedequation}
+
+\section*{Forced side hint}
+\begin{annotatedequation}
+G=\eqmark[green]{x}{x}+\eqmark[orange]{y}{y}
+\eqannotate[prefer=below]{x}{Forced below}
+\eqannotate[prefer=above]{y}{Forced above}
+\end{annotatedequation}
+\end{document}

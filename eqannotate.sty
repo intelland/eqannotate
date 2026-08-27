@@ -1,0 +1,1473 @@
+% eqannotate.sty -- declarative, self-layouting equation annotations
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{eqannotate}[2026/08/27 v0.1.0-rc2 Declarative equation annotations with automatic layout]
+
+\RequirePackage{xcolor}
+\RequirePackage{tikz}
+\RequirePackage{xparse}
+\RequirePackage{expl3}
+\RequirePackage{amsmath}
+\usetikzlibrary{tikzmark,arrows.meta,calc}
+\newcounter{eqannotateenv}% internal, checkpointed by \include/\includeonly
+
+% Public style/layout knobs. The default API intentionally avoids exposing
+% continuous coordinates; these are document-wide tuning parameters.
+\newcommand\eqannotatefont{\sffamily\footnotesize}
+\newcommand\eqannotateshade{20}
+\newcommand\eqannotatebasegap{1.45em}
+\newcommand\eqannotatelanestep{1.85em}
+\newcommand\eqannotatelanegap{0.50em}
+\newcommand\eqannotatemaxlabelwidth{.42\linewidth}
+\newcommand\eqannotateouterpad{0.35em}
+\newcommand\eqannotatehgap{0.65em}
+\newcommand\eqannotatesidebias{0.45em}
+\newcommand\eqannotateinitialreserve{4.2em}
+\newcommand\eqannotatelabelgap{3.2pt}
+\newcommand\eqannotatecolumnpad{0.45em}
+\newcommand\eqannotatetargetgap{2.0pt}
+\newcommand\eqannotateroutetrackstep{1.8pt}
+\newcommand\eqannotateroutetrackspan{6.4pt}
+\newcommand\eqannotatemaxshift{5.0em}
+\newcommand\eqannotatebackgroundcolor{white}
+% Public API intentionally stops at semantic declarations, soft side hints,
+% theme/callout switches, and the manual escape hatch. Geometry knobs above
+% remain advanced document-wide tuning parameters rather than per-label input.
+
+\tikzset{
+  eqannotate/label/.style={font=\eqannotatefont,align=center,inner xsep=2pt,inner ysep=1.5pt,draw=none,fill=\eqannotatebackgroundcolor},
+  eqannotate/leader/.style={line width=.4pt,line cap=round,line join=round},
+}
+
+\newcommand*{\eqannotatemathcolorbox}[2]{%
+  \mathchoice
+    {\colorbox{#1}{$\displaystyle\mathstrut #2$}}%
+    {\colorbox{#1}{$\textstyle\mathstrut #2$}}%
+    {\colorbox{#1}{$\scriptstyle\mathstrut #2$}}%
+    {\colorbox{#1}{$\scriptscriptstyle\mathstrut #2$}}%
+}
+
+\makeatletter
+\newcommand{\eqannotateauxdef}[2]{%
+  \protected@write\@auxout{}{%
+    \string\expandafter\string\gdef
+    \string\csname\space#1\string\endcsname{#2}}%
+}
+\makeatother
+
+% amsmath display environments such as multline perform an internal measuring
+% pass. Semantic declarations must be inert during that pass; otherwise the
+% remembered TikZ node can be captured from the measuring copy rather than the
+% final typeset copy.
+\makeatletter
+\newcommand{\eqaIfAmsmathMeasuringTF}[2]{\ifmeasuring@#1\else#2\fi}
+\makeatother
+
+\ExplSyntaxOn
+\int_new:N  \l__eqa_equation_int
+\seq_new:N  \g__eqa_ids_seq
+\prop_new:N \g__eqa_text_prop
+\prop_new:N \g__eqa_prefer_prop
+\prop_new:N \g__eqa_color_prop
+\prop_new:N \g__eqa_marked_prop
+\prop_new:N \g__eqa_physical_prop
+\seq_new:N  \g__eqa_manual_ids_seq
+\prop_new:N \g__eqa_manual_text_prop
+\prop_new:N \g__eqa_manual_opts_prop
+\prop_new:N \g__eqa_manual_route_prop
+
+\seq_new:N  \l__eqa_above_ids_seq
+\seq_new:N  \l__eqa_below_ids_seq
+\seq_new:N  \l__eqa_reverse_seq
+\seq_new:N  \l__eqa_route_ids_seq
+\seq_new:N  \l__eqa_valid_ids_seq
+\seq_new:N  \l__eqa_valid_manual_ids_seq
+\prop_new:N \l__eqa_width_prop
+\prop_new:N \l__eqa_height_prop
+\prop_new:N \l__eqa_text_width_prop
+\prop_new:N \l__eqa_x_prop
+\prop_new:N \l__eqa_north_y_prop
+\prop_new:N \l__eqa_south_y_prop
+\prop_new:N \l__eqa_lane_prop
+\prop_new:N \l__eqa_lane_right_prop
+\prop_new:N \l__eqa_label_x_prop
+\prop_new:N \l__eqa_min_center_prop
+\prop_new:N \l__eqa_max_center_prop
+\prop_new:N \l__eqa_earliest_center_prop
+\prop_new:N \l__eqa_track_prop
+\prop_new:N \l__eqa_yshift_prop
+\prop_new:N \l__eqa_lane_height_prop
+\prop_new:N \l__eqa_lane_offset_prop
+\prop_new:N \l__eqa_lane_next_left_prop
+
+\int_new:N  \l__eqa_auto_int
+\int_new:N  \l__eqa_mark_int
+\int_new:N  \l__eqa_above_item_int
+\int_new:N  \l__eqa_below_item_int
+\int_new:N  \l__eqa_above_lane_int
+\int_new:N  \l__eqa_below_lane_int
+\int_new:N  \l__eqa_lane_count_int
+\int_new:N  \l__eqa_candidate_lane_int
+\int_new:N  \l__eqa_current_lane_int
+\int_new:N  \g__eqa_above_used_int
+\int_new:N  \g__eqa_below_used_int
+\int_new:N  \l__eqa_track_int
+\int_new:N  \l__eqa_track_count_int
+\bool_new:N \l__eqa_numbered_bool
+\bool_new:N \l__eqa_active_bool
+\bool_new:N \l__eqa_multline_bool
+\bool_new:N \g__eqa_rerun_warned_bool
+
+\tl_new:N   \l__eqa_prefer_tl
+\tl_new:N   \l__eqa_text_tl
+\tl_new:N   \l__eqa_color_tl
+\tl_new:N   \l__eqa_physical_tl
+\tl_new:N   \l__eqa_origin_tl
+\tl_new:N   \l__eqa_current_id_tl
+\tl_new:N   \l__eqa_tmpa_tl
+\tl_new:N   \l__eqa_tmpb_tl
+\tl_new:N   \l__eqa_effective_color_tl
+\tl_new:N   \g__eqa_color_theme_tl
+\tl_new:N   \g__eqa_callout_style_tl
+\tl_gset:Nn \g__eqa_color_theme_tl {colorful}
+\tl_gset:Nn \g__eqa_callout_style_tl {leader}
+
+\dim_new:N  \l__eqa_yshift_dim
+\dim_new:N  \l__eqa_top_reserve_dim
+\dim_new:N  \l__eqa_bottom_reserve_dim
+\dim_new:N  \g__eqa_top_reserve_dim
+\dim_new:N  \g__eqa_bottom_reserve_dim
+\dim_new:N  \l__eqa_previous_top_dim
+\dim_new:N  \l__eqa_previous_bottom_dim
+\dim_new:N  \l__eqa_basegap_dim
+\dim_new:N  \l__eqa_lanestep_dim
+\dim_new:N  \l__eqa_lanegap_dim
+\dim_new:N  \l__eqa_maxlabelwidth_dim
+\dim_new:N  \l__eqa_wrap_content_width_dim
+\dim_new:N  \l__eqa_label_height_dim
+\dim_new:N  \l__eqa_label_text_width_dim
+\dim_new:N  \l__eqa_lane_height_dim
+\dim_new:N  \l__eqa_lane_offset_dim
+\dim_new:N  \l__eqa_lane_advance_dim
+\dim_new:N  \l__eqa_next_global_center_dim
+\dim_new:N  \l__eqa_outerpad_dim
+\dim_new:N  \l__eqa_hgap_dim
+\dim_new:N  \l__eqa_sidebias_dim
+\dim_new:N  \l__eqa_origin_north_y_dim
+\dim_new:N  \l__eqa_origin_south_y_dim
+\dim_new:N  \l__eqa_multline_top_y_dim
+\dim_new:N  \l__eqa_multline_bottom_y_dim
+\dim_new:N  \l__eqa_multline_center_y_dim
+\dim_new:N  \l__eqa_multline_phantom_ht_dim
+\dim_new:N  \l__eqa_multline_phantom_dp_dim
+\dim_new:N  \l__eqa_target_x_dim
+\dim_new:N  \l__eqa_target_north_y_dim
+\dim_new:N  \l__eqa_target_south_y_dim
+\dim_new:N  \l__eqa_escape_above_dim
+\dim_new:N  \l__eqa_escape_below_dim
+\dim_new:N  \l__eqa_label_width_dim
+\dim_new:N  \l__eqa_interval_left_dim
+\dim_new:N  \l__eqa_interval_right_dim
+\dim_new:N  \l__eqa_lane_right_dim
+\dim_new:N  \l__eqa_lane_threshold_dim
+\dim_new:N  \l__eqa_labelgap_dim
+\dim_new:N  \l__eqa_columnpad_dim
+\dim_new:N  \l__eqa_targetgap_dim
+\dim_new:N  \l__eqa_routetrackstep_dim
+\dim_new:N  \l__eqa_routetrackspan_dim
+\dim_new:N  \l__eqa_effective_trackstep_dim
+\dim_new:N  \l__eqa_routeoffset_dim
+\dim_new:N  \l__eqa_shift_a_dim
+\dim_new:N  \l__eqa_shift_b_dim
+\dim_new:N  \l__eqa_maxshift_dim
+\dim_new:N  \l__eqa_feasible_center_dim
+\dim_new:N  \l__eqa_desired_center_dim
+\dim_new:N  \l__eqa_next_left_dim
+\dim_new:N  \l__eqa_allowed_right_dim
+\dim_new:N  \l__eqa_column_left_dim
+\dim_new:N  \l__eqa_column_right_dim
+\dim_new:N  \l__eqa_bound_left_dim
+\dim_new:N  \l__eqa_bound_right_dim
+\dim_new:N  \l__eqa_label_x_dim
+\dim_new:N  \l__eqa_label_xshift_dim
+\dim_new:N  \l__eqa_halfwidth_dim
+\dim_new:N  \l__eqa_min_center_dim
+\dim_new:N  \l__eqa_max_center_dim
+\dim_new:N  \l__eqa_available_label_width_dim
+\dim_new:N  \l__eqa_manual_north_y_dim
+\dim_new:N  \l__eqa_manual_south_y_dim
+\dim_new:N  \l__eqa_manual_extent_dim
+\box_new:N  \l__eqa_measure_box
+\box_new:N  \l__eqa_wrap_box
+
+\cs_generate_variant:Nn \prop_put:Nnn { NVx, Nxx }
+\cs_generate_variant:Nn \prop_get:NnN { NVN, NxN }
+\cs_generate_variant:Nn \prop_get:NnNTF { NxNTF }
+
+\keys_define:nn { eqa / note }
+  {
+    prefer .choice:,
+    prefer / auto  .code:n = { \tl_set:Nn \l__eqa_prefer_tl {auto} },
+    prefer / above .code:n = { \tl_set:Nn \l__eqa_prefer_tl {above} },
+    prefer / below .code:n = { \tl_set:Nn \l__eqa_prefer_tl {below} },
+    prefer .initial:n = auto,
+  }
+
+\keys_define:nn { eqa / theme }
+  {
+    color .choice:,
+    color / colorful .code:n = { \tl_gset:Nn \g__eqa_color_theme_tl {colorful} },
+    color / mono     .code:n = { \tl_gset:Nn \g__eqa_color_theme_tl {mono} },
+    callout .choice:,
+    callout / leader .code:n = { \tl_gset:Nn \g__eqa_callout_style_tl {leader} },
+    callout / arrow  .code:n = { \tl_gset:Nn \g__eqa_callout_style_tl {arrow} },
+  }
+
+\keys_define:nn { eqa / env }
+  {
+    numbered .bool_set:N = \l__eqa_numbered_bool,
+    numbered .default:n = true,
+    numbered .initial:n = false,
+  }
+
+\NewDocumentCommand \eqannotatecolortheme { m }
+  { \keys_set:nn {eqa/theme}{color=#1} }
+\NewDocumentCommand \eqannotatecalloutstyle { m }
+  { \keys_set:nn {eqa/theme}{callout=#1} }
+
+\cs_new:Npn \eqa_physical_name:n #1 {\prop_item:Nn \g__eqa_physical_prop {#1}}
+\cs_new:Npn \eqa_labelport_name:n #1 {eqa-labelport-\eqa_physical_name:n{#1}}
+\cs_new:Npn \eqa_route_name:n #1 {eqa-route-\eqa_physical_name:n{#1}}
+\cs_new:Npn \eqa_site_name:n #1 {eqa-site-\eqa_physical_name:n{#1}}
+\cs_new:Npn \eqa_label_name:n #1 {eqa-label-\eqa_physical_name:n{#1}}
+\cs_new:Npn \eqa_origin_name: {eqa-origin-\int_use:N\l__eqa_equation_int}
+\cs_new:Npn \eqa_column_left_name: {eqa-column-left-\int_use:N\l__eqa_equation_int}
+\cs_new:Npn \eqa_column_right_name: {eqa-column-right-\int_use:N\l__eqa_equation_int}
+\cs_new:Npn \eqa_multline_top_name: {eqa-multline-top-\int_use:N\l__eqa_equation_int}
+\cs_new:Npn \eqa_multline_bottom_name: {eqa-multline-bottom-\int_use:N\l__eqa_equation_int}
+
+\cs_new_protected:Npn \eqa_reset:
+  {
+    \seq_gclear:N \g__eqa_ids_seq
+    \prop_gclear:N \g__eqa_text_prop
+    \prop_gclear:N \g__eqa_prefer_prop
+    \prop_gclear:N \g__eqa_color_prop
+    \prop_gclear:N \g__eqa_marked_prop
+    \prop_gclear:N \g__eqa_physical_prop
+    \seq_gclear:N \g__eqa_manual_ids_seq
+    \prop_gclear:N \g__eqa_manual_text_prop
+    \prop_gclear:N \g__eqa_manual_opts_prop
+    \prop_gclear:N \g__eqa_manual_route_prop
+    \seq_clear:N \l__eqa_above_ids_seq
+    \seq_clear:N \l__eqa_below_ids_seq
+    \prop_clear:N \l__eqa_width_prop
+    \prop_clear:N \l__eqa_height_prop
+    \prop_clear:N \l__eqa_text_width_prop
+    \prop_clear:N \l__eqa_x_prop
+    \prop_clear:N \l__eqa_north_y_prop
+    \prop_clear:N \l__eqa_south_y_prop
+    \prop_clear:N \l__eqa_lane_prop
+    \prop_clear:N \l__eqa_label_x_prop
+    \prop_clear:N \l__eqa_min_center_prop
+    \prop_clear:N \l__eqa_max_center_prop
+    \prop_clear:N \l__eqa_earliest_center_prop
+    \prop_clear:N \l__eqa_track_prop
+    \prop_clear:N \l__eqa_yshift_prop
+    \prop_clear:N \l__eqa_lane_height_prop
+    \prop_clear:N \l__eqa_lane_offset_prop
+    \prop_clear:N \l__eqa_lane_next_left_prop
+    \int_zero:N \l__eqa_auto_int
+    \int_gzero:N \l__eqa_mark_int
+    \int_zero:N \l__eqa_above_item_int
+    \int_zero:N \l__eqa_below_item_int
+    \int_gzero:N \g__eqa_above_used_int
+    \int_gzero:N \g__eqa_below_used_int
+  }
+
+\cs_new_protected:Npn \eqa_render_mark_content:nn #1#2
+  {
+    \str_case:VnF \g__eqa_color_theme_tl
+      {
+        {colorful}{\eqannotatemathcolorbox{#1!\eqannotateshade}{#2}}
+        {mono}{\mathstrut #2}
+      }
+      {\mathstrut #2}
+  }
+
+\NewDocumentCommand \eqmark { O{yellow} m m }
+  {
+    \eqaIfAmsmathMeasuringTF
+      {\eqa_render_mark_content:nn {#1}{#3}}
+      {
+        \bool_if:NTF \l__eqa_active_bool
+          {
+            \prop_if_in:NnTF \g__eqa_marked_prop {#2}
+              {
+                \PackageWarning{eqannotate}
+                  {Duplicate~mark~id~`#2'~in~one~annotated~equation;~using~the~first~target}
+                \eqa_render_mark_content:nn {#1}{#3}
+              }
+              {
+                \prop_gput:Nnn \g__eqa_marked_prop {#2}{1}
+                \prop_gput:Nnn \g__eqa_color_prop {#2}{#1}
+                \int_gincr:N \l__eqa_mark_int
+                \prop_gput:Nnx \g__eqa_physical_prop {#2}
+                  {eqa-\int_use:N\l__eqa_equation_int-m\int_use:N\l__eqa_mark_int}
+                \tikzmarknode{\eqa_physical_name:n{#2}}
+                  {\eqa_render_mark_content:nn {#1}{#3}}
+              }
+          }
+          {
+            \PackageError{eqannotate}
+              {\\eqmark~used~outside~an~EqAnnotate~display~environment}
+              {Place~marked~terms~inside~an~EqAnnotate~display~environment.}
+            #3
+          }
+      }
+  }
+
+\NewDocumentCommand \eqannotate { O{} m m }
+  {
+    \eqaIfAmsmathMeasuringTF
+      {}
+      {
+        \bool_if:NTF \l__eqa_active_bool
+          {
+            \keys_set:nn {eqa/note}{prefer=auto,#1}
+            \prop_if_in:NnT \g__eqa_text_prop {#2}
+              {
+                \PackageWarning{eqannotate}
+                  {Annotation~id~`#2'~declared~more~than~once;~using~the~last~declaration}
+              }
+            \seq_if_in:NnF \g__eqa_ids_seq {#2}
+              {\seq_gput_right:Nn \g__eqa_ids_seq {#2}}
+            \prop_gput:Nnn \g__eqa_text_prop {#2}{#3}
+            \prop_gput:NnV \g__eqa_prefer_prop {#2}\l__eqa_prefer_tl
+          }
+          {
+            \PackageError{eqannotate}
+              {\\eqannotate~used~outside~an~EqAnnotate~display~environment}
+              {Place~annotation~declarations~inside~an~EqAnnotate~display~environment.}
+          }
+      }
+  }
+
+% Commands used only while creating the invisible full-equation strut.
+% The mark replacement must preserve the *visual vertical extent* of the
+% active theme. In colorful mode the colorbox is taller/deeper than the raw
+% glyph; ignoring that extent can place the routing corridor inside the box
+% and make a final leader segment run in the wrong vertical direction.
+\NewDocumentCommand \eqa_extent_mark { O{yellow} m m }
+  {
+    \str_if_eq:VnTF \g__eqa_color_theme_tl {colorful}
+      {\eqannotatemathcolorbox{#1!\eqannotateshade}{#3}}
+      {\mathstrut #3}
+  }
+\NewDocumentCommand \eqa_plain_note { O{} m m } {}
+\NewDocumentCommand \eqa_plain_manual { O{} O{} m m } {}
+\cs_new_protected:Npn \eqa_formula_phantom:n #1
+  {
+    \group_begin:
+      \cs_set_eq:NN \eqmark \eqa_extent_mark
+      \cs_set_eq:NN \eqannotate \eqa_plain_note
+      \cs_set_eq:NN \eqannotatemanual \eqa_plain_manual
+      \cs_set_protected:Npn \label ##1 {}
+      \vphantom{\displaystyle #1}
+    \group_end:
+  }
+
+\cs_new_protected:Npn \eqa_align_phantom:n #1
+  {
+    \group_begin:
+      \cs_set_eq:NN \eqmark \eqa_extent_mark
+      \cs_set_eq:NN \eqannotate \eqa_plain_note
+      \cs_set_eq:NN \eqannotatemanual \eqa_plain_manual
+      \cs_set_protected:Npn \label ##1 {}
+      \vphantom{\begin{aligned}#1\end{aligned}}
+    \group_end:
+  }
+
+\cs_new_protected:Npn \eqa_gather_phantom:n #1
+  {
+    \group_begin:
+      \cs_set_eq:NN \eqmark \eqa_extent_mark
+      \cs_set_eq:NN \eqannotate \eqa_plain_note
+      \cs_set_eq:NN \eqannotatemanual \eqa_plain_manual
+      \cs_set_protected:Npn \label ##1 {}
+      \vphantom{\begin{gathered}#1\end{gathered}}
+    \group_end:
+  }
+
+\cs_new_protected:Npn \eqa_multline_phantom:n #1
+  {
+    \group_begin:
+      \cs_set_eq:NN \eqmark \eqa_extent_mark
+      \cs_set_eq:NN \eqannotate \eqa_plain_note
+      \cs_set_eq:NN \eqannotatemanual \eqa_plain_manual
+      \cs_set_protected:Npn \label ##1 {}
+      \vphantom{\begin{gathered}#1\end{gathered}}
+    \group_end:
+  }
+
+\cs_new_protected:Npn \eqa_prepare_layout_dims:
+  {
+    % Evaluate all em-based settings in the surrounding document font.
+    % tikzpicture itself uses \nullfont, where an em-based dimension can be 0pt.
+    \dim_set:Nn \l__eqa_basegap_dim {\eqannotatebasegap}
+    \dim_set:Nn \l__eqa_lanestep_dim {\eqannotatelanestep}
+    \dim_set:Nn \l__eqa_lanegap_dim {\eqannotatelanegap}
+    \dim_set:Nn \l__eqa_maxlabelwidth_dim {\eqannotatemaxlabelwidth}
+    \dim_set:Nn \l__eqa_outerpad_dim {\eqannotateouterpad}
+    \dim_set:Nn \l__eqa_hgap_dim {\eqannotatehgap}
+    \dim_set:Nn \l__eqa_sidebias_dim {\eqannotatesidebias}
+    \dim_set:Nn \l__eqa_labelgap_dim {\eqannotatelabelgap}
+    \dim_set:Nn \l__eqa_columnpad_dim {\eqannotatecolumnpad}
+    \dim_set:Nn \l__eqa_targetgap_dim {\eqannotatetargetgap}
+    \dim_set:Nn \l__eqa_routetrackstep_dim {\eqannotateroutetrackstep}
+    \dim_set:Nn \l__eqa_routetrackspan_dim {\eqannotateroutetrackspan}
+    \dim_set:Nn \l__eqa_maxshift_dim {\eqannotatemaxshift}
+    \dim_set:Nn \l__eqa_available_label_width_dim
+      {\linewidth - 2\l__eqa_columnpad_dim}
+    \dim_compare:nNnT {\l__eqa_available_label_width_dim} < {2em}
+      {\dim_set:Nn \l__eqa_available_label_width_dim {2em}}
+    % Text width excludes the 2pt TikZ inner xsep on both sides.
+    \dim_set:Nn \l__eqa_wrap_content_width_dim
+      {\l__eqa_available_label_width_dim - 4pt}
+    \dim_compare:nNnT {\l__eqa_maxlabelwidth_dim} < {\l__eqa_wrap_content_width_dim}
+      {\dim_set_eq:NN \l__eqa_wrap_content_width_dim \l__eqa_maxlabelwidth_dim}
+    \dim_compare:nNnT {\l__eqa_wrap_content_width_dim} < {4em}
+      {\dim_set:Nn \l__eqa_wrap_content_width_dim {4em}}
+  }
+
+\cs_new_protected:Npn \eqa_read_reserve:
+  {
+    \cs_if_exist:cTF {eqa@top@\int_use:N\l__eqa_equation_int}
+      {
+        \dim_set:Nn \l__eqa_previous_top_dim
+          {\use:c{eqa@top@\int_use:N\l__eqa_equation_int}}
+        \dim_set:Nn \l__eqa_previous_bottom_dim
+          {\use:c{eqa@bottom@\int_use:N\l__eqa_equation_int}}
+      }
+      {
+        \dim_set:Nn \l__eqa_previous_top_dim {\eqannotateinitialreserve}
+        \dim_set:Nn \l__eqa_previous_bottom_dim {\eqannotateinitialreserve}
+        \bool_if:NF \g__eqa_rerun_warned_bool
+          {
+            \PackageWarning{eqannotate}{Rerun~LaTeX~for~optimized~annotation~spacing}
+            \bool_gset_true:N \g__eqa_rerun_warned_bool
+          }
+      }
+  }
+
+\cs_new_protected:Npn \eqa_validate_annotations:
+  {
+    % Manual declarations are validated first. If the same target is declared
+    % through both interfaces, manual placement deliberately wins: it is the
+    % escape hatch for cases where the automatic solver is not desired.
+    \seq_clear:N \l__eqa_valid_manual_ids_seq
+    \seq_map_inline:Nn \g__eqa_manual_ids_seq
+      {
+        \prop_if_in:NnTF \g__eqa_marked_prop {##1}
+          {\seq_put_right:Nn \l__eqa_valid_manual_ids_seq {##1}}
+          {
+            \PackageWarning{eqannotate}
+              {Manual~annotation~`##1'~has~no~matching~\\eqmark;~skipping~this~annotation}
+          }
+      }
+    \seq_gset_eq:NN \g__eqa_manual_ids_seq \l__eqa_valid_manual_ids_seq
+
+    \seq_clear:N \l__eqa_valid_ids_seq
+    \seq_map_inline:Nn \g__eqa_ids_seq
+      {
+        \prop_if_in:NnTF \g__eqa_marked_prop {##1}
+          {
+            \seq_if_in:NnTF \g__eqa_manual_ids_seq {##1}
+              {
+                \PackageWarning{eqannotate}
+                  {Target~`##1'~has~both~automatic~and~manual~annotations;~manual~placement~overrides~automatic~placement}
+              }
+              {\seq_put_right:Nn \l__eqa_valid_ids_seq {##1}}
+          }
+          {
+            \PackageWarning{eqannotate}
+              {Annotation~`##1'~has~no~matching~\\eqmark;~skipping~this~annotation}
+          }
+      }
+    \seq_gset_eq:NN \g__eqa_ids_seq \l__eqa_valid_ids_seq
+  }
+
+\cs_new_protected:Npn \eqa_measure_labels:
+  {
+    \prop_clear:N \l__eqa_width_prop
+    \prop_clear:N \l__eqa_height_prop
+    \prop_clear:N \l__eqa_text_width_prop
+    \seq_map_inline:Nn \g__eqa_ids_seq
+      {
+        \prop_get:NnN \g__eqa_text_prop {##1}\l__eqa_text_tl
+        \hbox_set:Nn \l__eqa_measure_box
+          {{\eqannotatefont\strut\l__eqa_text_tl}}
+        % Keep short labels natural-width. Long labels become bounded
+        % paragraphs *before* horizontal packing, so their wrapped height is
+        % part of the layout rather than an after-the-fact rendering detail.
+        \dim_set:Nn \l__eqa_label_width_dim
+          {\box_wd:N\l__eqa_measure_box + 4pt}
+        \dim_set:Nn \l__eqa_label_height_dim
+          {\box_ht:N\l__eqa_measure_box + \box_dp:N\l__eqa_measure_box + 3pt}
+        \dim_zero:N \l__eqa_label_text_width_dim
+        \dim_compare:nNnT
+          {\box_wd:N\l__eqa_measure_box} > {\l__eqa_wrap_content_width_dim}
+          {
+            \vbox_set:Nn \l__eqa_wrap_box
+              {
+                \hsize=\l__eqa_wrap_content_width_dim
+                \parindent=0pt
+                \centering
+                \eqannotatefont
+                \strut\l__eqa_text_tl\par
+              }
+            \dim_set_eq:NN \l__eqa_label_text_width_dim \l__eqa_wrap_content_width_dim
+            \dim_set:Nn \l__eqa_label_width_dim
+              {\l__eqa_wrap_content_width_dim + 4pt}
+            \dim_set:Nn \l__eqa_label_height_dim
+              {\box_ht:N\l__eqa_wrap_box + \box_dp:N\l__eqa_wrap_box + 3pt}
+          }
+        \prop_put:Nnx \l__eqa_width_prop {##1}
+          {\dim_use:N\l__eqa_label_width_dim}
+        \prop_put:Nnx \l__eqa_height_prop {##1}
+          {\dim_use:N\l__eqa_label_height_dim}
+        \prop_put:Nnx \l__eqa_text_width_prop {##1}
+          {\dim_use:N\l__eqa_label_text_width_dim}
+      }
+  }
+
+\cs_new_protected:Npn \eqa_mark_column_bounds:
+  {
+    % A zero-height full-\linewidth box gives two remembered nodes at the
+    % active line/column edges without changing the displayed equation width.
+    \par\nointerlineskip
+    \hbox to \linewidth{%
+      \tikzmarknode[inner~sep=0pt,outer~sep=0pt]{\eqa_column_left_name:}{\rule{0pt}{0pt}}%
+      \hfil
+      \tikzmarknode[inner~sep=0pt,outer~sep=0pt]{\eqa_column_right_name:}{\rule{0pt}{0pt}}%
+    }%
+    \par\nointerlineskip
+  }
+
+\cs_new_protected:Npn \eqa_extract_geometry:
+  {
+    \tl_set:Nx \l__eqa_origin_tl {\eqa_origin_name:}
+    \pgfextractx{\l__eqa_column_left_dim}
+      {\pgfpointanchor{\eqa_column_left_name:}{center}}
+    \pgfextractx{\l__eqa_column_right_dim}
+      {\pgfpointanchor{\eqa_column_right_name:}{center}}
+    \dim_set:Nn \l__eqa_bound_left_dim
+      {\l__eqa_column_left_dim + \l__eqa_columnpad_dim}
+    \dim_set:Nn \l__eqa_bound_right_dim
+      {\l__eqa_column_right_dim - \l__eqa_columnpad_dim}
+    \bool_if:NTF \l__eqa_multline_bool
+      {
+        \pgfextracty{\l__eqa_multline_top_y_dim}
+          {\pgfpointanchor{\eqa_multline_top_name:}{center}}
+        \pgfextracty{\l__eqa_multline_bottom_y_dim}
+          {\pgfpointanchor{\eqa_multline_bottom_name:}{center}}
+        \dim_set:Nn \l__eqa_multline_center_y_dim
+          {.5\l__eqa_multline_top_y_dim + .5\l__eqa_multline_bottom_y_dim}
+        \dim_set:Nn \l__eqa_origin_north_y_dim
+          {\l__eqa_multline_center_y_dim + \l__eqa_multline_phantom_ht_dim}
+        \dim_set:Nn \l__eqa_origin_south_y_dim
+          {\l__eqa_multline_center_y_dim - \l__eqa_multline_phantom_dp_dim}
+      }
+      {
+        \pgfextracty{\l__eqa_origin_north_y_dim}
+          {\pgfpointanchor{\l__eqa_origin_tl}{north}}
+        \pgfextracty{\l__eqa_origin_south_y_dim}
+          {\pgfpointanchor{\l__eqa_origin_tl}{south}}
+      }
+    \seq_map_inline:Nn \g__eqa_ids_seq
+      {
+        \tl_set:Nx \l__eqa_physical_tl {\eqa_physical_name:n{##1}}
+        \pgfextractx{\l__eqa_target_x_dim}
+          {\pgfpointanchor{\l__eqa_physical_tl}{center}}
+        \pgfextracty{\l__eqa_target_north_y_dim}
+          {\pgfpointanchor{\l__eqa_physical_tl}{north}}
+        \pgfextracty{\l__eqa_target_south_y_dim}
+          {\pgfpointanchor{\l__eqa_physical_tl}{south}}
+        \prop_put:Nnx \l__eqa_x_prop {##1}
+          {\dim_use:N\l__eqa_target_x_dim}
+        \prop_put:Nnx \l__eqa_north_y_prop {##1}
+          {\dim_use:N\l__eqa_target_north_y_dim}
+        \prop_put:Nnx \l__eqa_south_y_prop {##1}
+          {\dim_use:N\l__eqa_target_south_y_dim}
+        \bool_if:NT \l__eqa_multline_bool
+          {
+            \dim_compare:nNnT {\l__eqa_target_north_y_dim} > {\l__eqa_origin_north_y_dim}
+              {\dim_set_eq:NN \l__eqa_origin_north_y_dim \l__eqa_target_north_y_dim}
+            \dim_compare:nNnT {\l__eqa_target_south_y_dim} < {\l__eqa_origin_south_y_dim}
+              {\dim_set_eq:NN \l__eqa_origin_south_y_dim \l__eqa_target_south_y_dim}
+          }
+      }
+  }
+
+\cs_new_protected:Npn \eqa_push_above:n #1
+  {
+    \seq_put_right:Nn \l__eqa_above_ids_seq {#1}
+    \int_incr:N \l__eqa_above_item_int
+  }
+\cs_new_protected:Npn \eqa_push_below:n #1
+  {
+    \seq_put_right:Nn \l__eqa_below_ids_seq {#1}
+    \int_incr:N \l__eqa_below_item_int
+  }
+
+\cs_new_protected:Npn \eqa_choose_auto_side:n #1
+  {
+    \prop_get:NnN \l__eqa_north_y_prop {#1}\l__eqa_tmpa_tl
+    \prop_get:NnN \l__eqa_south_y_prop {#1}\l__eqa_tmpb_tl
+    \dim_set:Nn \l__eqa_target_north_y_dim {\l__eqa_tmpa_tl}
+    \dim_set:Nn \l__eqa_target_south_y_dim {\l__eqa_tmpb_tl}
+    \dim_set:Nn \l__eqa_escape_above_dim
+      {\l__eqa_origin_north_y_dim - \l__eqa_target_north_y_dim}
+    \dim_set:Nn \l__eqa_escape_below_dim
+      {\l__eqa_target_south_y_dim - \l__eqa_origin_south_y_dim}
+    \dim_compare:nNnT {\l__eqa_escape_above_dim} < {0pt}
+      {\dim_zero:N\l__eqa_escape_above_dim}
+    \dim_compare:nNnT {\l__eqa_escape_below_dim} < {0pt}
+      {\dim_zero:N\l__eqa_escape_below_dim}
+    % If one edge is clearly nearer, use it. Otherwise balance both bands.
+    \dim_set:Nn \l__eqa_lane_threshold_dim
+      {\l__eqa_escape_above_dim + \l__eqa_sidebias_dim}
+    \dim_compare:nNnTF {\l__eqa_lane_threshold_dim} < {\l__eqa_escape_below_dim}
+      {\eqa_push_above:n{#1}}
+      {
+        \dim_set:Nn \l__eqa_lane_threshold_dim
+          {\l__eqa_escape_below_dim + \l__eqa_sidebias_dim}
+        \dim_compare:nNnTF {\l__eqa_lane_threshold_dim} < {\l__eqa_escape_above_dim}
+          {\eqa_push_below:n{#1}}
+          {
+            \int_compare:nNnTF {\l__eqa_above_item_int} < {\l__eqa_below_item_int + 1}
+              {\eqa_push_above:n{#1}}
+              {\eqa_push_below:n{#1}}
+          }
+      }
+  }
+
+\cs_new_protected:Npn \eqa_choose_sides:
+  {
+    \seq_clear:N \l__eqa_above_ids_seq
+    \seq_clear:N \l__eqa_below_ids_seq
+    \int_zero:N \l__eqa_above_item_int
+    \int_zero:N \l__eqa_below_item_int
+    \seq_map_inline:Nn \g__eqa_ids_seq
+      {
+        \prop_get:NnN \g__eqa_prefer_prop {##1}\l__eqa_prefer_tl
+        \str_case:VnF \l__eqa_prefer_tl
+          {
+            {above}{\eqa_push_above:n{##1}}
+            {below}{\eqa_push_below:n{##1}}
+          }
+          {\eqa_choose_auto_side:n{##1}}
+      }
+  }
+
+\cs_new_protected:Npn \eqa_prepare_label_bounds:n #1
+  {
+    \prop_get:NnN \l__eqa_x_prop {#1}\l__eqa_tmpa_tl
+    \prop_get:NnN \l__eqa_width_prop {#1}\l__eqa_tmpb_tl
+    \dim_set:Nn \l__eqa_target_x_dim {\l__eqa_tmpa_tl}
+    \dim_set:Nn \l__eqa_label_width_dim {\l__eqa_tmpb_tl}
+    \dim_set:Nn \l__eqa_halfwidth_dim {.5\l__eqa_label_width_dim}
+    \dim_set:Nn \l__eqa_min_center_dim
+      {\l__eqa_bound_left_dim + \l__eqa_halfwidth_dim}
+    \dim_set:Nn \l__eqa_max_center_dim
+      {\l__eqa_bound_right_dim - \l__eqa_halfwidth_dim}
+    % Limit automatic horizontal motion as well as keeping the label inside
+    % the active column. This keeps de-overlap useful without allowing a
+    % label to drift arbitrarily far from its term.
+    \dim_set:Nn \l__eqa_feasible_center_dim
+      {\l__eqa_target_x_dim - \l__eqa_maxshift_dim}
+    \dim_compare:nNnT {\l__eqa_feasible_center_dim} > {\l__eqa_min_center_dim}
+      {\dim_set_eq:NN \l__eqa_min_center_dim \l__eqa_feasible_center_dim}
+    \dim_set:Nn \l__eqa_feasible_center_dim
+      {\l__eqa_target_x_dim + \l__eqa_maxshift_dim}
+    \dim_compare:nNnT {\l__eqa_feasible_center_dim} < {\l__eqa_max_center_dim}
+      {\dim_set_eq:NN \l__eqa_max_center_dim \l__eqa_feasible_center_dim}
+    % A label wider than the usable column has no legal interval. Keep it
+    % centered rather than letting the solver recurse on an invalid range.
+    \dim_compare:nNnTF {\l__eqa_min_center_dim} > {\l__eqa_max_center_dim}
+      {
+        \dim_set:Nn \l__eqa_label_x_dim
+          {.5\l__eqa_bound_left_dim + .5\l__eqa_bound_right_dim}
+        \dim_set_eq:NN \l__eqa_min_center_dim \l__eqa_label_x_dim
+        \dim_set_eq:NN \l__eqa_max_center_dim \l__eqa_label_x_dim
+      }
+      {
+        \dim_set_eq:NN \l__eqa_label_x_dim \l__eqa_target_x_dim
+        \dim_compare:nNnT {\l__eqa_label_x_dim} < {\l__eqa_min_center_dim}
+          {\dim_set_eq:NN \l__eqa_label_x_dim \l__eqa_min_center_dim}
+        \dim_compare:nNnT {\l__eqa_label_x_dim} > {\l__eqa_max_center_dim}
+          {\dim_set_eq:NN \l__eqa_label_x_dim \l__eqa_max_center_dim}
+      }
+    \prop_put:Nnx \l__eqa_min_center_prop {#1}
+      {\dim_use:N\l__eqa_min_center_dim}
+    \prop_put:Nnx \l__eqa_max_center_prop {#1}
+      {\dim_use:N\l__eqa_max_center_dim}
+    \prop_put:Nnx \l__eqa_label_x_prop {#1}
+      {\dim_use:N\l__eqa_label_x_dim}
+  }
+
+\cs_new_protected:Npn \eqa_prepare_label_bounds:
+  {
+    \prop_clear:N \l__eqa_label_x_prop
+    \prop_clear:N \l__eqa_min_center_prop
+    \prop_clear:N \l__eqa_max_center_prop
+    \prop_clear:N \l__eqa_earliest_center_prop
+    \prop_clear:N \l__eqa_track_prop
+    \seq_map_inline:Nn \l__eqa_above_ids_seq {\eqa_prepare_label_bounds:n{##1}}
+    \seq_map_inline:Nn \l__eqa_below_ids_seq {\eqa_prepare_label_bounds:n{##1}}
+  }
+
+\cs_new_protected:Npn \eqa_sort_by_x:N #1
+  {
+    \seq_sort:Nn #1
+      {
+        \prop_get:NnN \l__eqa_x_prop {##1}\l__eqa_tmpa_tl
+        \prop_get:NnN \l__eqa_x_prop {##2}\l__eqa_tmpb_tl
+        \dim_compare:nNnTF {\l__eqa_tmpa_tl} > {\l__eqa_tmpb_tl}
+          {\sort_return_swapped:}
+          {\sort_return_same:}
+      }
+  }
+
+\cs_new_protected:Npn \eqa_commit_deoverlap_lane:
+  {
+    \int_set_eq:NN \l__eqa_current_lane_int \l__eqa_candidate_lane_int
+    \prop_put:NVx \l__eqa_lane_prop \l__eqa_current_id_tl
+      {\int_use:N\l__eqa_current_lane_int}
+    \prop_put:NVx \l__eqa_earliest_center_prop \l__eqa_current_id_tl
+      {\dim_use:N\l__eqa_feasible_center_dim}
+    \dim_set:Nn \l__eqa_interval_right_dim
+      {\l__eqa_feasible_center_dim + \l__eqa_halfwidth_dim}
+    \prop_put:Nxx \l__eqa_lane_right_prop
+      {\int_use:N\l__eqa_current_lane_int}
+      {\dim_use:N\l__eqa_interval_right_dim}
+  }
+
+\cs_new_protected:Npn \eqa_find_deoverlap_lane:
+  {
+    \int_compare:nNnTF {\l__eqa_candidate_lane_int} > {\l__eqa_lane_count_int}
+      {
+        \int_incr:N \l__eqa_lane_count_int
+        \int_set_eq:NN \l__eqa_candidate_lane_int \l__eqa_lane_count_int
+        \prop_get:NVN \l__eqa_min_center_prop
+          \l__eqa_current_id_tl \l__eqa_tmpa_tl
+        \dim_set:Nn \l__eqa_feasible_center_dim {\l__eqa_tmpa_tl}
+        \eqa_commit_deoverlap_lane:
+      }
+      {
+        \prop_get:NxN \l__eqa_lane_right_prop
+          {\int_use:N\l__eqa_candidate_lane_int}\l__eqa_tmpa_tl
+        \dim_set:Nn \l__eqa_lane_right_dim {\l__eqa_tmpa_tl}
+        \prop_get:NVN \l__eqa_min_center_prop
+          \l__eqa_current_id_tl \l__eqa_tmpa_tl
+        \prop_get:NVN \l__eqa_max_center_prop
+          \l__eqa_current_id_tl \l__eqa_tmpb_tl
+        \dim_set:Nn \l__eqa_min_center_dim {\l__eqa_tmpa_tl}
+        \dim_set:Nn \l__eqa_max_center_dim {\l__eqa_tmpb_tl}
+        \dim_set:Nn \l__eqa_feasible_center_dim
+          {\l__eqa_lane_right_dim + \l__eqa_hgap_dim + \l__eqa_halfwidth_dim}
+        \dim_compare:nNnT {\l__eqa_feasible_center_dim} < {\l__eqa_min_center_dim}
+          {\dim_set_eq:NN \l__eqa_feasible_center_dim \l__eqa_min_center_dim}
+        \dim_compare:nNnTF
+          {\l__eqa_feasible_center_dim} > {\l__eqa_max_center_dim}
+          {
+            \int_incr:N \l__eqa_candidate_lane_int
+            \eqa_find_deoverlap_lane:
+          }
+          {\eqa_commit_deoverlap_lane:}
+      }
+  }
+
+\cs_new_protected:Npn \eqa_relax_seq_global:N #1
+  {
+    % Relax all lanes in one right-to-left pass. A global center bound keeps
+    % label order consistent with target order even across different lanes;
+    % per-lane right bounds simultaneously preserve collision spacing.
+    \prop_clear:N \l__eqa_lane_next_left_prop
+    \int_step_inline:nn {\l__eqa_lane_count_int}
+      {
+        \prop_put:Nnx \l__eqa_lane_next_left_prop {##1}
+          {\dim_use:N\l__eqa_bound_right_dim}
+      }
+    \dim_set_eq:NN \l__eqa_next_global_center_dim \l__eqa_bound_right_dim
+    \seq_set_eq:NN \l__eqa_reverse_seq #1
+    \seq_reverse:N \l__eqa_reverse_seq
+    \seq_map_inline:Nn \l__eqa_reverse_seq
+      {
+        \prop_get:NnN \l__eqa_lane_prop {##1}\l__eqa_tmpa_tl
+        \int_set:Nn \l__eqa_current_lane_int {\l__eqa_tmpa_tl}
+        \prop_get:NnN \l__eqa_width_prop {##1}\l__eqa_tmpa_tl
+        \prop_get:NnN \l__eqa_x_prop {##1}\l__eqa_tmpb_tl
+        \dim_set:Nn \l__eqa_label_width_dim {\l__eqa_tmpa_tl}
+        \dim_set:Nn \l__eqa_halfwidth_dim {.5\l__eqa_label_width_dim}
+        \dim_set:Nn \l__eqa_target_x_dim {\l__eqa_tmpb_tl}
+        \prop_get:NnN \l__eqa_min_center_prop {##1}\l__eqa_tmpa_tl
+        \prop_get:NnN \l__eqa_max_center_prop {##1}\l__eqa_tmpb_tl
+        \dim_set:Nn \l__eqa_min_center_dim {\l__eqa_tmpa_tl}
+        \dim_set:Nn \l__eqa_max_center_dim {\l__eqa_tmpb_tl}
+        \prop_get:NnN \l__eqa_earliest_center_prop {##1}\l__eqa_tmpa_tl
+        \dim_set:Nn \l__eqa_feasible_center_dim {\l__eqa_tmpa_tl}
+        \prop_get:NxN \l__eqa_lane_next_left_prop
+          {\int_use:N\l__eqa_current_lane_int}\l__eqa_tmpa_tl
+        \dim_set:Nn \l__eqa_next_left_dim {\l__eqa_tmpa_tl}
+        \dim_set:Nn \l__eqa_allowed_right_dim
+          {\l__eqa_next_left_dim - \l__eqa_hgap_dim - \l__eqa_halfwidth_dim}
+        \dim_compare:nNnT {\l__eqa_allowed_right_dim} > {\l__eqa_max_center_dim}
+          {\dim_set_eq:NN \l__eqa_allowed_right_dim \l__eqa_max_center_dim}
+        \dim_compare:nNnT {\l__eqa_allowed_right_dim} > {\l__eqa_next_global_center_dim}
+          {\dim_set_eq:NN \l__eqa_allowed_right_dim \l__eqa_next_global_center_dim}
+        \dim_set_eq:NN \l__eqa_desired_center_dim \l__eqa_target_x_dim
+        \dim_compare:nNnT {\l__eqa_desired_center_dim} < {\l__eqa_min_center_dim}
+          {\dim_set_eq:NN \l__eqa_desired_center_dim \l__eqa_min_center_dim}
+        \dim_compare:nNnT {\l__eqa_desired_center_dim} > {\l__eqa_allowed_right_dim}
+          {\dim_set_eq:NN \l__eqa_desired_center_dim \l__eqa_allowed_right_dim}
+        \dim_set_eq:NN \l__eqa_label_x_dim \l__eqa_desired_center_dim
+        \dim_compare:nNnT {\l__eqa_label_x_dim} < {\l__eqa_feasible_center_dim}
+          {\dim_set_eq:NN \l__eqa_label_x_dim \l__eqa_feasible_center_dim}
+        \dim_compare:nNnT {\l__eqa_label_x_dim} > {\l__eqa_allowed_right_dim}
+          {
+            % If global order and bounded/collision-free placement cannot all
+            % be satisfied, keep the collision-free lane solution silently.
+            % Routing micro-tracks still separate the resulting connectors.
+            \dim_set_eq:NN \l__eqa_label_x_dim \l__eqa_feasible_center_dim
+          }
+        \prop_put:Nnx \l__eqa_label_x_prop {##1}
+          {\dim_use:N\l__eqa_label_x_dim}
+        \dim_set:Nn \l__eqa_next_left_dim
+          {\l__eqa_label_x_dim - \l__eqa_halfwidth_dim}
+        \prop_put:Nxx \l__eqa_lane_next_left_prop
+          {\int_use:N\l__eqa_current_lane_int}
+          {\dim_use:N\l__eqa_next_left_dim}
+        \dim_set_eq:NN \l__eqa_next_global_center_dim \l__eqa_label_x_dim
+      }
+  }
+
+\cs_new_protected:Npn \eqa_pack_seq:NN #1#2
+  {
+    \prop_clear:N \l__eqa_lane_right_prop
+    \int_zero:N \l__eqa_lane_count_int
+    \seq_map_inline:Nn #1
+      {
+        \tl_set:Nn \l__eqa_current_id_tl {##1}
+        \prop_get:NnN \l__eqa_width_prop {##1}\l__eqa_tmpa_tl
+        \dim_set:Nn \l__eqa_label_width_dim {\l__eqa_tmpa_tl}
+        \dim_set:Nn \l__eqa_halfwidth_dim {.5\l__eqa_label_width_dim}
+        \int_set:Nn \l__eqa_candidate_lane_int {1}
+        \eqa_find_deoverlap_lane:
+      }
+    \eqa_relax_seq_global:N #1
+    \int_set_eq:NN #2 \l__eqa_lane_count_int
+  }
+
+\cs_new_protected:Npn \eqa_compute_lane_geometry:N #1
+  {
+    % Wrapped labels can be taller than one line. Each lane advances by the
+    % greater of the historical lane step and (actual lane height + gap).
+    \prop_clear:N \l__eqa_lane_height_prop
+    \prop_clear:N \l__eqa_lane_offset_prop
+    \seq_map_inline:Nn #1
+      {
+        \prop_get:NnN \l__eqa_lane_prop {##1}\l__eqa_tmpa_tl
+        \prop_get:NnN \l__eqa_height_prop {##1}\l__eqa_tmpb_tl
+        \prop_get:NxNTF \l__eqa_lane_height_prop {\l__eqa_tmpa_tl}\l__eqa_text_tl
+          {
+            \dim_set:Nn \l__eqa_lane_height_dim {\l__eqa_text_tl}
+            \dim_compare:nNnT {\l__eqa_tmpb_tl} > {\l__eqa_lane_height_dim}
+              {\prop_put:Nxx \l__eqa_lane_height_prop {\l__eqa_tmpa_tl}{\l__eqa_tmpb_tl}}
+          }
+          {\prop_put:Nxx \l__eqa_lane_height_prop {\l__eqa_tmpa_tl}{\l__eqa_tmpb_tl}}
+      }
+    \dim_set_eq:NN \l__eqa_lane_offset_dim \l__eqa_basegap_dim
+    \int_step_inline:nn {\l__eqa_lane_count_int}
+      {
+        \prop_put:Nnx \l__eqa_lane_offset_prop {##1}
+          {\dim_use:N\l__eqa_lane_offset_dim}
+        \prop_get:NxN \l__eqa_lane_height_prop {##1}\l__eqa_tmpa_tl
+        \dim_set:Nn \l__eqa_lane_height_dim {\l__eqa_tmpa_tl}
+        \dim_set:Nn \l__eqa_lane_advance_dim
+          {\l__eqa_lane_height_dim + \l__eqa_lanegap_dim}
+        \dim_compare:nNnT {\l__eqa_lane_advance_dim} < {\l__eqa_lanestep_dim}
+          {\dim_set_eq:NN \l__eqa_lane_advance_dim \l__eqa_lanestep_dim}
+        \dim_add:Nn \l__eqa_lane_offset_dim {\l__eqa_lane_advance_dim}
+      }
+    \seq_map_inline:Nn #1
+      {
+        \prop_get:NnN \l__eqa_lane_prop {##1}\l__eqa_tmpa_tl
+        \prop_get:NxN \l__eqa_lane_offset_prop {\l__eqa_tmpa_tl}\l__eqa_tmpb_tl
+        \prop_put:Nnx \l__eqa_yshift_prop {##1}{\l__eqa_tmpb_tl}
+      }
+  }
+
+\cs_new_protected:Npn \eqa_assign_route_tracks:N #1
+  {
+    % Give displaced connectors separate micro-tracks. The longest horizontal
+    % moves are routed closest to the formula, so their horizontal segments
+    % pass below the shorter label stems rather than crossing through them.
+    % This is a compact orthogonal equivalent of interval nesting.
+    \prop_clear:N \l__eqa_track_prop
+    \seq_set_eq:NN \l__eqa_route_ids_seq #1
+    \seq_sort:Nn \l__eqa_route_ids_seq
+      {
+        \prop_get:NnN \l__eqa_label_x_prop {##1}\l__eqa_tmpa_tl
+        \prop_get:NnN \l__eqa_x_prop {##1}\l__eqa_tmpb_tl
+        \dim_set:Nn \l__eqa_shift_a_dim {\l__eqa_tmpa_tl-\l__eqa_tmpb_tl}
+        \dim_compare:nNnT {\l__eqa_shift_a_dim} < {0pt}
+          {\dim_set:Nn \l__eqa_shift_a_dim {-\l__eqa_shift_a_dim}}
+        \prop_get:NnN \l__eqa_label_x_prop {##2}\l__eqa_tmpa_tl
+        \prop_get:NnN \l__eqa_x_prop {##2}\l__eqa_tmpb_tl
+        \dim_set:Nn \l__eqa_shift_b_dim {\l__eqa_tmpa_tl-\l__eqa_tmpb_tl}
+        \dim_compare:nNnT {\l__eqa_shift_b_dim} < {0pt}
+          {\dim_set:Nn \l__eqa_shift_b_dim {-\l__eqa_shift_b_dim}}
+        \dim_compare:nNnTF {\l__eqa_shift_a_dim} < {\l__eqa_shift_b_dim}
+          {\sort_return_swapped:}
+          {\sort_return_same:}
+      }
+    \int_zero:N \l__eqa_track_int
+    \int_set:Nn \l__eqa_track_count_int {\seq_count:N \l__eqa_route_ids_seq}
+    \dim_set_eq:NN \l__eqa_effective_trackstep_dim \l__eqa_routetrackstep_dim
+    \int_compare:nNnT {\l__eqa_track_count_int} > {1}
+      {
+        \dim_set:Nn \l__eqa_routeoffset_dim
+          {\l__eqa_routetrackspan_dim / \int_eval:n{\l__eqa_track_count_int-1}}
+        \dim_compare:nNnT
+          {\l__eqa_effective_trackstep_dim} > {\l__eqa_routeoffset_dim}
+          {\dim_set_eq:NN \l__eqa_effective_trackstep_dim \l__eqa_routeoffset_dim}
+      }
+    \seq_map_inline:Nn \l__eqa_route_ids_seq
+      {
+        \int_incr:N \l__eqa_track_int
+        \prop_put:Nnx \l__eqa_track_prop {##1}
+          {\int_use:N\l__eqa_track_int}
+      }
+  }
+
+\cs_new_protected:Npn \eqa_route_offset:n #1
+  {
+    \prop_get:NnN \l__eqa_track_prop {#1}\l__eqa_tmpa_tl
+    \int_set:Nn \l__eqa_track_int {\l__eqa_tmpa_tl}
+    % Center the bundle of micro-tracks around the historical corridor.
+    % Formula: (i - (N+1)/2) * step, expressed without floating point.
+    \dim_set:Nn \l__eqa_routeoffset_dim
+      { \fp_eval:n
+          { \l__eqa_track_int - ( \l__eqa_track_count_int + 1 ) / 2 }
+        \l__eqa_effective_trackstep_dim }
+  }
+
+\cs_new_protected:Npn \eqa_set_effective_color:n #1
+  {
+    \str_if_eq:VnTF \g__eqa_color_theme_tl {mono}
+      {\tl_set:Nn \l__eqa_effective_color_tl {black}}
+      {
+        \prop_get:NnNTF \g__eqa_color_prop {#1}\l__eqa_color_tl
+          {\tl_set:Nx \l__eqa_effective_color_tl {\l__eqa_color_tl!80!black}}
+          {\tl_set:Nn \l__eqa_effective_color_tl {black}}
+      }
+  }
+
+\cs_new_protected:Npn \eqa_draw_connector:nnnnn #1#2#3#4#5
+  {
+    % Leaders are rendered before labels. The later label node carries an
+    % invisible page-colored mask, so any leader segment that would pass
+    % under annotation text disappears automatically rather than mixing with
+    % the glyphs.
+    \str_if_eq:VnTF \g__eqa_callout_style_tl {arrow}
+      {
+        \draw[eqannotate/leader,draw=#4,
+          shorten~<=\dim_use:N\l__eqa_labelgap_dim]
+          (#1)--(#1|-#3)--(#2|-#3)--(#2);
+        \str_if_eq:nnTF {#5}{above}
+          {
+            \fill[draw=#4,fill=#4]
+              (#2)--([xshift=-.48mm,yshift=.92mm]#2)--
+              ([xshift=.48mm,yshift=.92mm]#2)--cycle;
+          }
+          {
+            \fill[draw=#4,fill=#4]
+              (#2)--([xshift=-.48mm,yshift=-.92mm]#2)--
+              ([xshift=.48mm,yshift=-.92mm]#2)--cycle;
+          }
+      }
+      {
+        \draw[eqannotate/leader,draw=#4,
+          shorten~<=\dim_use:N\l__eqa_labelgap_dim,shorten~>=.8pt]
+          (#1)--(#1|-#3)--(#2|-#3)--(#2);
+      }
+  }
+
+\cs_new_protected:Npn \eqa_prepare_above:n #1
+  {
+    \prop_get:NnN \l__eqa_yshift_prop {#1}\l__eqa_tmpa_tl
+    \dim_set:Nn \l__eqa_yshift_dim {\l__eqa_tmpa_tl}
+    \prop_get:NnN \l__eqa_label_x_prop {#1}\l__eqa_tmpa_tl
+    \prop_get:NnN \l__eqa_x_prop {#1}\l__eqa_tmpb_tl
+    \dim_set:Nn \l__eqa_label_x_dim {\l__eqa_tmpa_tl}
+    \dim_set:Nn \l__eqa_target_x_dim {\l__eqa_tmpb_tl}
+    \prop_get:NnN \l__eqa_north_y_prop {#1}\l__eqa_tmpa_tl
+    \dim_set:Nn \l__eqa_target_north_y_dim {\l__eqa_tmpa_tl}
+    \coordinate (\eqa_labelport_name:n{#1})
+      at (\dim_use:N\l__eqa_label_x_dim,
+          \dim_eval:n{\l__eqa_origin_north_y_dim + \l__eqa_yshift_dim});
+    \eqa_route_offset:n {#1}
+    \coordinate (\eqa_route_name:n{#1})
+      at (\dim_use:N\l__eqa_label_x_dim,
+          \dim_eval:n{\l__eqa_origin_north_y_dim + .56\l__eqa_basegap_dim + \l__eqa_routeoffset_dim});
+    \coordinate (\eqa_site_name:n{#1})
+      at (\dim_use:N\l__eqa_target_x_dim,
+          \dim_eval:n{\l__eqa_target_north_y_dim + \l__eqa_targetgap_dim + .7pt});
+  }
+
+\cs_new_protected:Npn \eqa_prepare_below:n #1
+  {
+    \prop_get:NnN \l__eqa_yshift_prop {#1}\l__eqa_tmpa_tl
+    \dim_set:Nn \l__eqa_yshift_dim {\l__eqa_tmpa_tl}
+    \prop_get:NnN \l__eqa_label_x_prop {#1}\l__eqa_tmpa_tl
+    \prop_get:NnN \l__eqa_x_prop {#1}\l__eqa_tmpb_tl
+    \dim_set:Nn \l__eqa_label_x_dim {\l__eqa_tmpa_tl}
+    \dim_set:Nn \l__eqa_target_x_dim {\l__eqa_tmpb_tl}
+    \prop_get:NnN \l__eqa_south_y_prop {#1}\l__eqa_tmpa_tl
+    \dim_set:Nn \l__eqa_target_south_y_dim {\l__eqa_tmpa_tl}
+    \coordinate (\eqa_labelport_name:n{#1})
+      at (\dim_use:N\l__eqa_label_x_dim,
+          \dim_eval:n{\l__eqa_origin_south_y_dim - \l__eqa_yshift_dim});
+    \eqa_route_offset:n {#1}
+    \coordinate (\eqa_route_name:n{#1})
+      at (\dim_use:N\l__eqa_label_x_dim,
+          \dim_eval:n{\l__eqa_origin_south_y_dim - .56\l__eqa_basegap_dim - \l__eqa_routeoffset_dim});
+    \coordinate (\eqa_site_name:n{#1})
+      at (\dim_use:N\l__eqa_target_x_dim,
+          \dim_eval:n{\l__eqa_target_south_y_dim - \l__eqa_targetgap_dim});
+  }
+
+\cs_new_protected:Npn \eqa_draw_connector_above:n #1
+  {
+    \eqa_set_effective_color:n {#1}
+    \eqa_draw_connector:nnnnn
+      {\eqa_labelport_name:n{#1}}
+      {\eqa_site_name:n{#1}}
+      {\eqa_route_name:n{#1}}
+      {\l__eqa_effective_color_tl}
+      {above}
+  }
+
+\cs_new_protected:Npn \eqa_draw_connector_below:n #1
+  {
+    \eqa_set_effective_color:n {#1}
+    \eqa_draw_connector:nnnnn
+      {\eqa_labelport_name:n{#1}}
+      {\eqa_site_name:n{#1}}
+      {\eqa_route_name:n{#1}}
+      {\l__eqa_effective_color_tl}
+      {below}
+  }
+
+\cs_new_protected:Npn \eqa_draw_label_above:n #1
+  {
+    \prop_get:NnN \g__eqa_text_prop {#1}\l__eqa_text_tl
+    \prop_get:NnN \l__eqa_text_width_prop {#1}\l__eqa_tmpa_tl
+    \dim_set:Nn \l__eqa_label_text_width_dim {\l__eqa_tmpa_tl}
+    \eqa_set_effective_color:n {#1}
+    \dim_compare:nNnTF {\l__eqa_label_text_width_dim} > {0pt}
+      {
+        \node[eqannotate/label,text=\l__eqa_effective_color_tl,anchor=south,
+          text~width=\dim_use:N\l__eqa_label_text_width_dim]
+          (\eqa_label_name:n{#1})
+          at (\eqa_labelport_name:n{#1})
+          {\l__eqa_text_tl};
+      }
+      {
+        \node[eqannotate/label,text=\l__eqa_effective_color_tl,anchor=south]
+          (\eqa_label_name:n{#1})
+          at (\eqa_labelport_name:n{#1})
+          {\l__eqa_text_tl};
+      }
+  }
+
+\cs_new_protected:Npn \eqa_draw_label_below:n #1
+  {
+    \prop_get:NnN \g__eqa_text_prop {#1}\l__eqa_text_tl
+    \prop_get:NnN \l__eqa_text_width_prop {#1}\l__eqa_tmpa_tl
+    \dim_set:Nn \l__eqa_label_text_width_dim {\l__eqa_tmpa_tl}
+    \eqa_set_effective_color:n {#1}
+    \dim_compare:nNnTF {\l__eqa_label_text_width_dim} > {0pt}
+      {
+        \node[eqannotate/label,text=\l__eqa_effective_color_tl,anchor=north,
+          text~width=\dim_use:N\l__eqa_label_text_width_dim]
+          (\eqa_label_name:n{#1})
+          at (\eqa_labelport_name:n{#1})
+          {\l__eqa_text_tl};
+      }
+      {
+        \node[eqannotate/label,text=\l__eqa_effective_color_tl,anchor=north]
+          (\eqa_label_name:n{#1})
+          at (\eqa_labelport_name:n{#1})
+          {\l__eqa_text_tl};
+      }
+  }
+
+\cs_new_protected:Npn \eqa_compute_reserve:
+  {
+    \dim_zero:N \l__eqa_top_reserve_dim
+    \dim_zero:N \l__eqa_bottom_reserve_dim
+    \seq_map_inline:Nn \l__eqa_above_ids_seq
+      {
+        \prop_get:NnN \l__eqa_yshift_prop {##1}\l__eqa_tmpa_tl
+        \prop_get:NnN \l__eqa_height_prop {##1}\l__eqa_tmpb_tl
+        \dim_set:Nn \l__eqa_lane_offset_dim
+          {\l__eqa_tmpa_tl + \l__eqa_tmpb_tl + \l__eqa_outerpad_dim}
+        \dim_compare:nNnT {\l__eqa_lane_offset_dim} > {\l__eqa_top_reserve_dim}
+          {\dim_set_eq:NN \l__eqa_top_reserve_dim \l__eqa_lane_offset_dim}
+      }
+    \seq_map_inline:Nn \l__eqa_below_ids_seq
+      {
+        \prop_get:NnN \l__eqa_yshift_prop {##1}\l__eqa_tmpa_tl
+        \prop_get:NnN \l__eqa_height_prop {##1}\l__eqa_tmpb_tl
+        \dim_set:Nn \l__eqa_lane_offset_dim
+          {\l__eqa_tmpa_tl + \l__eqa_tmpb_tl + \l__eqa_outerpad_dim}
+        \dim_compare:nNnT {\l__eqa_lane_offset_dim} > {\l__eqa_bottom_reserve_dim}
+          {\dim_set_eq:NN \l__eqa_bottom_reserve_dim \l__eqa_lane_offset_dim}
+      }
+    \dim_gset_eq:NN \g__eqa_top_reserve_dim \l__eqa_top_reserve_dim
+    \dim_gset_eq:NN \g__eqa_bottom_reserve_dim \l__eqa_bottom_reserve_dim
+  }
+
+\cs_new_protected:Npn \eqa_write_reserve:
+  {
+    \eqannotateauxdef{eqa@top@\int_use:N\l__eqa_equation_int}
+      {\dim_use:N\g__eqa_top_reserve_dim}
+    \eqannotateauxdef{eqa@bottom@\int_use:N\l__eqa_equation_int}
+      {\dim_use:N\g__eqa_bottom_reserve_dim}
+  }
+
+\cs_new_protected:Npn \eqa_render:
+  {
+    \eqa_validate_annotations:
+    \eqa_measure_labels:
+    \prop_clear:N \l__eqa_lane_prop
+    \dim_gzero:N \g__eqa_top_reserve_dim
+    \dim_gzero:N \g__eqa_bottom_reserve_dim
+    \tl_set:Nx \l__eqa_origin_tl {\eqa_origin_name:}
+    \bool_set_false:N \l_tmpa_bool
+    \seq_if_empty:NF \g__eqa_ids_seq {\bool_set_true:N \l_tmpa_bool}
+    \seq_if_empty:NF \g__eqa_manual_ids_seq {\bool_set_true:N \l_tmpa_bool}
+    \bool_if:NT \l_tmpa_bool
+      {
+        \begin{tikzpicture}[remember~picture,overlay]
+          \eqa_extract_geometry:
+          % Automatic labels keep the full solver. Manual labels bypass it but
+          % still share the measured equation geometry and final render pass.
+          \seq_if_empty:NF \g__eqa_ids_seq
+            {
+              \eqa_choose_sides:
+              \eqa_sort_by_x:N \l__eqa_above_ids_seq
+              \eqa_sort_by_x:N \l__eqa_below_ids_seq
+              \eqa_prepare_label_bounds:
+              \eqa_pack_seq:NN \l__eqa_above_ids_seq \l__eqa_above_lane_int
+              \eqa_compute_lane_geometry:N \l__eqa_above_ids_seq
+              \eqa_pack_seq:NN \l__eqa_below_ids_seq \l__eqa_below_lane_int
+              \eqa_compute_lane_geometry:N \l__eqa_below_ids_seq
+              \int_compare:nNnT {\l__eqa_above_lane_int} > {4}
+                {\PackageWarning{eqannotate}{Dense~layout~uses~\int_use:N\l__eqa_above_lane_int~lanes~above~the~equation}}
+              \int_compare:nNnT {\l__eqa_below_lane_int} > {4}
+                {\PackageWarning{eqannotate}{Dense~layout~uses~\int_use:N\l__eqa_below_lane_int~lanes~below~the~equation}}
+              \eqa_assign_route_tracks:N \l__eqa_above_ids_seq
+              \seq_map_inline:Nn \l__eqa_above_ids_seq {\eqa_prepare_above:n{##1}}
+              \eqa_assign_route_tracks:N \l__eqa_below_ids_seq
+              \seq_map_inline:Nn \l__eqa_below_ids_seq {\eqa_prepare_below:n{##1}}
+            }
+          % All connector geometry must exist before any visible label is
+          % drawn, so both automatic and manual labels can mask crossings.
+          \seq_map_inline:Nn \g__eqa_manual_ids_seq {\eqa_prepare_manual:n{##1}}
+          \seq_if_empty:NF \g__eqa_ids_seq
+            {
+              \seq_map_inline:Nn \l__eqa_above_ids_seq {\eqa_draw_connector_above:n{##1}}
+              \seq_map_inline:Nn \l__eqa_below_ids_seq {\eqa_draw_connector_below:n{##1}}
+            }
+          \seq_map_inline:Nn \g__eqa_manual_ids_seq {\eqa_draw_manual_connector:n{##1}}
+          \seq_if_empty:NF \g__eqa_ids_seq
+            {
+              \seq_map_inline:Nn \l__eqa_above_ids_seq {\eqa_draw_label_above:n{##1}}
+              \seq_map_inline:Nn \l__eqa_below_ids_seq {\eqa_draw_label_below:n{##1}}
+              \int_gset_eq:NN \g__eqa_above_used_int \l__eqa_above_lane_int
+              \int_gset_eq:NN \g__eqa_below_used_int \l__eqa_below_lane_int
+            }
+          \seq_map_inline:Nn \g__eqa_manual_ids_seq {\eqa_draw_manual_label:n{##1}}
+          \eqa_compute_reserve:
+          \eqa_augment_manual_reserve:
+        \end{tikzpicture}%
+      }
+    \eqa_write_reserve:
+  }
+
+% Manual escape hatch. The syntax stays intentionally close to raw TikZ:
+% node options position the annotation relative to the marked target. Unlike
+% the early prototype, manual annotations are collected and rendered in the
+% same final overlay pass as automatic annotations. This lets them inherit
+% themes/callout styles, stay behind the label mask, and contribute to the
+% .aux-based vertical space reservation.
+\NewDocumentCommand \eqannotatemanual { O{yshift=1cm} O{} m m }
+  {
+    \eqaIfAmsmathMeasuringTF
+      {}
+      {
+        \bool_if:NTF \l__eqa_active_bool
+          {
+            \prop_if_in:NnT \g__eqa_manual_text_prop {#3}
+              {
+                \PackageWarning{eqannotate}
+                  {Manual~annotation~id~`#3'~declared~more~than~once;~using~the~last~declaration}
+              }
+            \seq_if_in:NnF \g__eqa_manual_ids_seq {#3}
+              {\seq_gput_right:Nn \g__eqa_manual_ids_seq {#3}}
+            \prop_gput:Nnn \g__eqa_manual_opts_prop {#3}{#1}
+            \prop_gput:Nnn \g__eqa_manual_route_prop {#3}{#2}
+            \prop_gput:Nnn \g__eqa_manual_text_prop {#3}{#4}
+          }
+          {
+            \PackageError{eqannotate}
+              {\\eqannotatemanual~used~outside~an~EqAnnotate~display~environment}
+              {Place~manual~annotations~inside~an~EqAnnotate~display~environment.}
+          }
+      }
+  }
+
+\cs_new:Npn \eqa_manual_probe_name:n #1
+  {eqa-manual-probe-\eqa_physical_name:n{#1}}
+\cs_new:Npn \eqa_manual_label_name:n #1
+  {eqa-manual-label-\eqa_physical_name:n{#1}}
+
+\cs_new_protected:Npn \eqa_prepare_manual_aux:nn #1#2
+  {
+    \prop_get:NnN \g__eqa_manual_text_prop {#1}\l__eqa_text_tl
+    \tl_set:Nx \l__eqa_physical_tl {\eqa_physical_name:n{#1}}
+    \eqa_set_effective_color:n {#1}
+    \node[eqannotate/label,text=\l__eqa_effective_color_tl,
+      text~opacity=0,fill~opacity=0,draw~opacity=0,#2]
+      (\eqa_manual_probe_name:n{#1})
+      at (\l__eqa_physical_tl.center) {\l__eqa_text_tl};
+  }
+
+\cs_new_protected:Npn \eqa_prepare_manual:n #1
+  {
+    \prop_get:NnN \g__eqa_manual_opts_prop {#1}\l__eqa_tmpa_tl
+    \exp_args:NnV \eqa_prepare_manual_aux:nn {#1}\l__eqa_tmpa_tl
+  }
+
+\cs_new_protected:Npn \eqa_draw_manual_connector_aux:nn #1#2
+  {
+    \tl_set:Nx \l__eqa_physical_tl {\eqa_physical_name:n{#1}}
+    \eqa_set_effective_color:n {#1}
+    \str_if_eq:VnTF \g__eqa_callout_style_tl {arrow}
+      {
+        \draw[eqannotate/leader,draw=\l__eqa_effective_color_tl,
+          -{Stealth[length=3.0pt,width=3.2pt]}]
+          (\eqa_manual_probe_name:n{#1}) to[#2] (\l__eqa_physical_tl);
+      }
+      {
+        \draw[eqannotate/leader,draw=\l__eqa_effective_color_tl]
+          (\eqa_manual_probe_name:n{#1}) to[#2] (\l__eqa_physical_tl);
+      }
+  }
+
+\cs_new_protected:Npn \eqa_draw_manual_connector:n #1
+  {
+    \prop_get:NnN \g__eqa_manual_route_prop {#1}\l__eqa_tmpa_tl
+    \exp_args:NnV \eqa_draw_manual_connector_aux:nn {#1}\l__eqa_tmpa_tl
+  }
+
+\cs_new_protected:Npn \eqa_draw_manual_label_aux:nn #1#2
+  {
+    \prop_get:NnN \g__eqa_manual_text_prop {#1}\l__eqa_text_tl
+    \tl_set:Nx \l__eqa_physical_tl {\eqa_physical_name:n{#1}}
+    \eqa_set_effective_color:n {#1}
+    \node[eqannotate/label,text=\l__eqa_effective_color_tl,#2]
+      (\eqa_manual_label_name:n{#1})
+      at (\l__eqa_physical_tl.center) {\l__eqa_text_tl};
+  }
+
+\cs_new_protected:Npn \eqa_draw_manual_label:n #1
+  {
+    \prop_get:NnN \g__eqa_manual_opts_prop {#1}\l__eqa_tmpa_tl
+    \exp_args:NnV \eqa_draw_manual_label_aux:nn {#1}\l__eqa_tmpa_tl
+  }
+
+\cs_new_protected:Npn \eqa_augment_manual_reserve:
+  {
+    \seq_map_inline:Nn \g__eqa_manual_ids_seq
+      {
+        \pgfextracty{\l__eqa_manual_north_y_dim}
+          {\pgfpointanchor{\eqa_manual_probe_name:n{##1}}{north}}
+        \pgfextracty{\l__eqa_manual_south_y_dim}
+          {\pgfpointanchor{\eqa_manual_probe_name:n{##1}}{south}}
+        \dim_set:Nn \l__eqa_manual_extent_dim
+          {\l__eqa_manual_north_y_dim - \l__eqa_origin_north_y_dim + \l__eqa_outerpad_dim}
+        \dim_compare:nNnT {\l__eqa_manual_extent_dim} > {\l__eqa_top_reserve_dim}
+          {\dim_set_eq:NN \l__eqa_top_reserve_dim \l__eqa_manual_extent_dim}
+        \dim_set:Nn \l__eqa_manual_extent_dim
+          {\l__eqa_origin_south_y_dim - \l__eqa_manual_south_y_dim + \l__eqa_outerpad_dim}
+        \dim_compare:nNnT {\l__eqa_manual_extent_dim} > {\l__eqa_bottom_reserve_dim}
+          {\dim_set_eq:NN \l__eqa_bottom_reserve_dim \l__eqa_manual_extent_dim}
+      }
+    \dim_gset_eq:NN \g__eqa_top_reserve_dim \l__eqa_top_reserve_dim
+    \dim_gset_eq:NN \g__eqa_bottom_reserve_dim \l__eqa_bottom_reserve_dim
+  }
+
+\cs_new_protected:Npn \eqa_begin_environment:n #1
+  {
+    \group_begin:
+    \bool_set_true:N \l__eqa_active_bool
+    \bool_set_false:N \l__eqa_multline_bool
+    \keys_set:nn {eqa/env}{numbered=false,#1}
+    \stepcounter{eqannotateenv}
+    \int_set:Nn \l__eqa_equation_int {\value{eqannotateenv}}
+    \eqa_reset:
+    \eqa_prepare_layout_dims:
+    \eqa_read_reserve:
+    \eqa_mark_column_bounds:
+    \par\vspace{\l__eqa_previous_top_dim}
+  }
+
+\cs_new_protected:Npn \eqa_end_environment:
+  {
+    \eqa_render:
+    \par\vspace{\l__eqa_previous_bottom_dim}
+    \group_end:
+  }
+
+\cs_new_protected:Npn \eqa_typeset_single:n #1
+  {
+    \bool_if:NTF \l__eqa_numbered_bool
+      {
+        \begin{equation}
+          \tikzmarknode{\eqa_origin_name:}{\eqa_formula_phantom:n{#1}}%
+          #1%
+        \end{equation}
+      }
+      {
+        \[
+          \tikzmarknode{\eqa_origin_name:}{\eqa_formula_phantom:n{#1}}%
+          #1%
+        \]
+      }
+  }
+
+\cs_new_protected:Npn \eqa_typeset_aligned:n #1
+  {
+    \bool_if:NTF \l__eqa_numbered_bool
+      {
+        \begin{equation}
+          \tikzmarknode{\eqa_origin_name:}{\eqa_align_phantom:n{#1}}%
+          \begin{aligned}#1\end{aligned}%
+        \end{equation}
+      }
+      {
+        \[
+          \tikzmarknode{\eqa_origin_name:}{\eqa_align_phantom:n{#1}}%
+          \begin{aligned}#1\end{aligned}%
+        \]
+      }
+  }
+
+\cs_new_protected:Npn \eqa_typeset_gathered:n #1
+  {
+    \bool_if:NTF \l__eqa_numbered_bool
+      {
+        \begin{equation}
+          \tikzmarknode{\eqa_origin_name:}{\eqa_gather_phantom:n{#1}}%
+          \begin{gathered}#1\end{gathered}%
+        \end{equation}
+      }
+      {
+        \[
+          \tikzmarknode{\eqa_origin_name:}{\eqa_gather_phantom:n{#1}}%
+          \begin{gathered}#1\end{gathered}%
+        \]
+      }
+  }
+
+\cs_new_protected:Npn \eqa_typeset_multlined:n #1
+  {
+    % Native amsmath multline keeps tikzmark positions correct. Measure a
+    % boxed gathered copy only for total vertical extent; semantic commands
+    % are inert in the amsmath measuring pass via \eqaIfAmsmathMeasuringTF.
+    \hbox_set:Nn \l__eqa_measure_box
+      {$\displaystyle\eqa_multline_phantom:n{#1}$}
+    \dim_set:Nn \l__eqa_multline_phantom_ht_dim {\box_ht:N\l__eqa_measure_box}
+    \dim_set:Nn \l__eqa_multline_phantom_dp_dim {\box_dp:N\l__eqa_measure_box}
+    \bool_if:NTF \l__eqa_numbered_bool
+      {
+        \begin{multline}
+          \eqaIfAmsmathMeasuringTF
+            {\mathstrut}
+            {\tikzmarknode[inner~sep=0pt,outer~sep=0pt]
+              {\eqa_multline_top_name:}{\mathstrut}}%
+          #1%
+          \eqaIfAmsmathMeasuringTF
+            {}
+            {\tikzmarknode[inner~sep=0pt,outer~sep=0pt]
+              {\eqa_multline_bottom_name:}{\mathstrut}}%
+        \end{multline}
+      }
+      {
+        \begin{multline*}
+          \eqaIfAmsmathMeasuringTF
+            {\mathstrut}
+            {\tikzmarknode[inner~sep=0pt,outer~sep=0pt]
+              {\eqa_multline_top_name:}{\mathstrut}}%
+          #1%
+          \eqaIfAmsmathMeasuringTF
+            {}
+            {\tikzmarknode[inner~sep=0pt,outer~sep=0pt]
+              {\eqa_multline_bottom_name:}{\mathstrut}}%
+        \end{multline*}
+      }
+  }
+
+\NewDocumentEnvironment{annotatedequation}{ O{} +b }
+  {
+    \eqa_begin_environment:n {#1}
+    \eqa_typeset_single:n {#2}
+    \eqa_end_environment:
+  }
+  {}
+
+% Multi-line display support with one optional equation number for the whole
+% aligned block. Per-row align numbering remains intentionally unsupported.
+\NewDocumentEnvironment{annotatedalign}{ O{} +b }
+  {
+    \eqa_begin_environment:n {#1}
+    \eqa_typeset_aligned:n {#2}
+    \eqa_end_environment:
+  }
+  {}
+
+% Centered multi-line block. Like annotatedalign, [numbered] gives one number
+% for the whole block rather than native gather's number-per-row semantics.
+\NewDocumentEnvironment{annotatedgather}{ O{} +b }
+  {
+    \eqa_begin_environment:n {#1}
+    \eqa_typeset_gathered:n {#2}
+    \eqa_end_environment:
+  }
+  {}
+
+% Long equations split across lines with multline-style first/last alignment.
+% A boxed gathered phantom is used only to estimate total vertical extent;
+% the visible display retains native amsmath multline layout.
+\NewDocumentEnvironment{annotatedmultline}{ O{} +b }
+  {
+    \eqa_begin_environment:n {#1}
+    \bool_set_true:N \l__eqa_multline_bool
+    \eqa_typeset_multlined:n {#2}
+    \eqa_end_environment:
+  }
+  {}
+\ExplSyntaxOff
+\endinput

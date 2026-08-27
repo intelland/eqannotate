@@ -1,0 +1,15 @@
+\documentclass{article}
+\usepackage{eqannotate}
+\begin{document}
+Equation~\ref{eq:test}.
+\begin{annotatedequation}[numbered]
+y=\eqmark[blue]{base}{f(x)}+\eqmark[orange]{corr}{g(x)}\label{eq:test}
+\eqannotate{base}{Base term}\eqannotate{corr}{Correction}
+\end{annotatedequation}
+\begin{annotatedalign}[numbered]
+a &= \eqmark[blue]{x}{x}+1 \\
+b &= \eqmark[orange]{y}{y}+2 \label{eq:alignblock}
+\eqannotate{x}{First state}\eqannotate{y}{Second state}
+\end{annotatedalign}
+Block~\ref{eq:alignblock}.
+\end{document}

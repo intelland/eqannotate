@@ -1,0 +1,11 @@
+\documentclass{article}
+\usepackage{eqannotate}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\begin{document}
+See Eq.~\ref{eq:hyper-after} and \cref{eq:hyper-after}.
+\begin{annotatedequation}[numbered]
+y=\eqmark[blue]{source.term}{x}+1\label{eq:hyper-after}
+\eqannotate{source.term}{Input term}
+\end{annotatedequation}
+\end{document}

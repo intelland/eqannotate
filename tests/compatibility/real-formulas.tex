@@ -1,0 +1,166 @@
+\documentclass{article}
+\usepackage[margin=0.72in]{geometry}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{eqannotate}
+\setlength{\parindent}{0pt}
+\begin{document}
+\section*{EqAnnotate compatibility corpus: real scientific formula patterns}
+
+\subsection*{1. Gaussian density / nested fractions}
+\begin{annotatedequation}
+p(x)=\frac{1}{\sqrt{2\pi}\eqmark[blue]{sigma}{\sigma}}
+\exp\!\left(-\frac{(x-\eqmark[yellow]{mu}{\mu})^2}{2\sigma^2}\right)
+\eqannotate{mu}{Mean}\eqannotate{sigma}{Scale}
+\end{annotatedequation}
+
+\subsection*{2. Scaled dot-product attention}
+\begin{annotatedequation}
+\operatorname{Attention}(Q,K,V)=
+\eqmark[cyan]{softmax}{\operatorname{softmax}\!\left(\frac{QK^{\mathsf T}}{\sqrt{d_k}}\right)}
+\eqmark[orange]{value}{V}
+\eqannotate{softmax}{Attention weights}\eqannotate{value}{Values}
+\end{annotatedequation}
+
+\subsection*{3. Residual transformer block / nested functions}
+\begin{annotatedequation}
+h_{\ell+1}=h_\ell+
+\eqmark[green]{ffn}{\operatorname{FFN}\!\left(\operatorname{LN}(h_\ell+\operatorname{MHA}(h_\ell))\right)}
+\eqannotate{ffn}{Normalized feed-forward branch}
+\end{annotatedequation}
+
+\subsection*{4. Cross-entropy / sum and script-style mark}
+\begin{annotatedequation}
+\mathcal L_{\mathrm{CE}}=-\sum_{\eqmark[purple]{classidx}{c}=1}^{C}
+\eqmark[blue]{target}{y_c}\log \eqmark[orange]{prob}{p_c}
+\eqannotate{classidx}{Class index}\eqannotate{target}{Target}\eqannotate{prob}{Predicted probability}
+\end{annotatedequation}
+
+\subsection*{5. Variational lower bound / expectation and KL}
+\begin{annotatedequation}
+\log p(x)\ge
+\eqmark[cyan]{recon}{\mathbb E_{q_\phi(z\mid x)}[\log p_\theta(x\mid z)]}
+-\eqmark[red]{kl}{D_{\mathrm{KL}}\!\left(q_\phi(z\mid x)\,\|\,p(z)\right)}
+\eqannotate{recon}{Expected reconstruction term}\eqannotate{kl}{KL regularizer}
+\end{annotatedequation}
+
+\subsection*{6. Reparameterization}
+\begin{annotatedequation}
+z=\eqmark[blue]{mean}{\mu_\phi(x)}+
+\eqmark[orange]{scale}{\sigma_\phi(x)}\odot
+\eqmark[green]{noise}{\varepsilon},\qquad \varepsilon\sim\mathcal N(0,I)
+\eqannotate{mean}{Posterior mean}\eqannotate{scale}{Posterior scale}\eqannotate{noise}{Sampled noise}
+\end{annotatedequation}
+
+\subsection*{7. Diffusion forward process}
+\begin{annotatedequation}
+q(x_t\mid x_0)=\mathcal N\!\left(
+\eqmark[blue]{diffmean}{\sqrt{\bar\alpha_t}\,x_0},
+\eqmark[orange]{diffvar}{(1-\bar\alpha_t)I}\right)
+\eqannotate{diffmean}{Noised signal mean}\eqannotate{diffvar}{Noise covariance}
+\end{annotatedequation}
+
+\subsection*{8. Diffusion denoising objective / norm}
+\begin{annotatedequation}
+\mathcal L=\mathbb E_{t,x_0,\varepsilon}\!\left[
+\left\|\eqmark[yellow]{eps}{\varepsilon}
+-\eqmark[cyan]{epspred}{\varepsilon_\theta(x_t,t)}\right\|_2^2\right]
+\eqannotate{eps}{Injected noise}\eqannotate{epspred}{Predicted noise}
+\end{annotatedequation}
+
+\subsection*{9. Probability-flow ODE / derivative}
+\begin{annotatedequation}
+\frac{d x_t}{dt}=\eqmark[blue]{drift}{f(x_t,t)}-
+\frac12\eqmark[orange]{scorecoef}{g(t)^2}\eqmark[green]{score}{\nabla_x\log p_t(x_t)}
+\eqannotate{drift}{Forward drift}\eqannotate{scorecoef}{Diffusion strength}\eqannotate{score}{Score field}
+\end{annotatedequation}
+
+\subsection*{10. Flow matching}
+\begin{annotatedequation}
+\frac{d x_t}{dt}=\eqmark[blue]{velocity}{v_\theta(x_t,t)},\qquad
+\mathcal L_{\mathrm{FM}}=\mathbb E\left[\|v_\theta(x_t,t)-\eqmark[orange]{targetv}{u_t(x_t)}\|_2^2\right]
+\eqannotate{velocity}{Learned velocity field}\eqannotate{targetv}{Target vector field}
+\end{annotatedequation}
+
+\subsection*{11. InfoNCE / nested exponential fraction}
+\begin{annotatedequation}
+\mathcal L_i=-\log\frac{
+\exp(\eqmark[green]{positive}{\operatorname{sim}(z_i,z_i^+)}/\tau)}{
+\exp(\operatorname{sim}(z_i,z_i^+)/\tau)+
+\sum_{j\ne i}\exp(\eqmark[red]{negative}{\operatorname{sim}(z_i,z_j)}/\tau)}
+\eqannotate{positive}{Positive-pair similarity}\eqannotate{negative}{Negative similarities}
+\end{annotatedequation}
+
+\subsection*{12. Adam update / radicals and fractions}
+\begin{annotatedequation}
+\theta_t=\theta_{t-1}-\eqmark[blue]{lr}{\eta}
+\frac{\eqmark[cyan]{mhat}{\hat m_t}}{\sqrt{\eqmark[orange]{vhat}{\hat v_t}}+\varepsilon}
+\eqannotate{lr}{Learning rate}\eqannotate{mhat}{Bias-corrected first moment}\eqannotate{vhat}{Bias-corrected second moment}
+\end{annotatedequation}
+
+\subsection*{13. Regularized empirical risk}
+\begin{annotatedequation}
+\theta^*=\arg\min_\theta\left\{
+\eqmark[blue]{risk}{\frac1n\sum_{i=1}^n\ell(f_\theta(x_i),y_i)}
++\eqmark[orange]{reg}{\lambda\|\theta\|_2^2}\right\}
+\eqannotate{risk}{Empirical risk}\eqannotate{reg}{Quadratic regularizer}
+\end{annotatedequation}
+
+\subsection*{14. Constrained Lagrangian}
+\begin{annotatedequation}
+\mathcal L(x,\lambda,\nu)=\eqmark[blue]{objective}{f(x)}+
+\sum_i\eqmark[orange]{ineq}{\lambda_i g_i(x)}+
+\sum_j\eqmark[green]{eqc}{\nu_j h_j(x)}
+\eqannotate{objective}{Objective}\eqannotate{ineq}{Inequality constraints}\eqannotate{eqc}{Equality constraints}
+\end{annotatedequation}
+
+\subsection*{15. Continuous expectation / integral}
+\begin{annotatedequation}
+\mathbb E_{p(x)}[f(x)]=\int_{\mathcal X}\eqmark[cyan]{fn}{f(x)}\eqmark[orange]{density}{p(x)}\,dx
+\eqannotate{fn}{Integrand}\eqannotate{density}{Probability density}
+\end{annotatedequation}
+
+\subsection*{16. Matrix affine map / bold symbols}
+\begin{annotatedequation}
+\bm y=\eqmark[blue]{weight}{W}\bm x+\eqmark[orange]{bias}{\bm b},\qquad
+W\in\mathbb R^{m\times n}
+\eqannotate{weight}{Weight matrix}\eqannotate{bias}{Bias vector}
+\end{annotatedequation}
+
+\subsection*{16b. Whole matrix subexpression}
+\begin{annotatedequation}
+A=\eqmark[purple]{matrix}{\begin{bmatrix}a&b\\c&d\end{bmatrix}}x
+\eqannotate{matrix}{System matrix}
+\end{annotatedequation}
+
+\subsection*{17. Piecewise definition / cases}
+\begin{annotatedequation}
+f(x)=\begin{cases}
+\eqmark[blue]{pos}{x^2}, & x\ge 0,\\
+\eqmark[orange]{neg}{-x}, & x<0.
+\end{cases}
+\eqannotate{pos}{Nonnegative branch}\eqannotate{neg}{Negative branch}
+\end{annotatedequation}
+
+\subsection*{18. Nested delimiters and a marked subexpression}
+\begin{annotatedequation}
+J(\theta)=\left\|A\left(\eqmark[yellow]{transform}{B\theta+c}\right)-y\right\|_{\Sigma^{-1}}^2
+\eqannotate{transform}{Inner affine transform}
+\end{annotatedequation}
+
+\subsection*{19. Numbered display and reference}
+Equation~\ref{eq:compat-numbered} is generated by the numbered mode.
+\begin{annotatedequation}[numbered]
+E=\eqmark[blue]{energy}{mc^2}+\eqmark[orange]{offset}{E_0}\label{eq:compat-numbered}
+\eqannotate{energy}{Mass-energy term}\eqannotate{offset}{Reference offset}
+\end{annotatedequation}
+
+\subsection*{20. Multi-line aligned block}
+\begin{annotatedalign}[numbered]
+r_0 &= \eqmark[blue]{start}{x_0}-y,\\
+r_{k+1} &= \eqmark[orange]{update}{r_k-\alpha_k A p_k},\\
+x_{k+1} &= x_k+\eqmark[green]{step}{\alpha_k p_k}\label{eq:compat-aligned}
+\eqannotate{start}{Initial residual}\eqannotate{update}{Residual update}\eqannotate{step}{State update}
+\end{annotatedalign}
+Aligned block reference: Eq.~\ref{eq:compat-aligned}.
+
+\end{document}

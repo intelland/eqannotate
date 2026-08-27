@@ -1,0 +1,31 @@
+\documentclass[twocolumn]{article}
+\usepackage[margin=0.65in,columnsep=0.35in]{geometry}
+\usepackage{eqannotate}
+\pagestyle{empty}
+\begin{document}
+\section*{Column-aware bounds}
+\eqannotatecolortheme{colorful}
+\eqannotatecalloutstyle{arrow}
+\begin{annotatedequation}
+\eqmark[blue]{left}{\alpha}
++\beta+\gamma+\delta+\epsilon+\zeta+
+\eqmark[red]{right}{\eta}
+\eqannotate[prefer=above]{left}{A deliberately long label near the left edge}
+\eqannotate[prefer=below]{right}{Another deliberately long label near the right edge}
+\end{annotatedequation}
+
+\vspace{1em}
+\noindent The labels should remain inside this column even though their ideal centers are near the edge terms.
+
+\newpage
+\section*{Bounded horizontal de-overlap}
+\eqannotatecolortheme{mono}
+\eqannotatecalloutstyle{leader}
+\begin{annotatedequation}
+\eqmark{a}{a}+\eqmark{b}{b}+\eqmark{c}{c}+\eqmark{d}{d}+\eqmark{e}{e}
+\eqannotate[prefer=above]{a}{Long left annotation}
+\eqannotate[prefer=above]{b}{Second left annotation}
+\eqannotate[prefer=above]{d}{Second right annotation}
+\eqannotate[prefer=above]{e}{Long right annotation}
+\end{annotatedequation}
+\end{document}

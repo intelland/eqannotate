@@ -1,0 +1,26 @@
+\documentclass[11pt]{article}
+\usepackage[margin=25mm]{geometry}
+\usepackage{eqannotate}
+\pagestyle{empty}
+\begin{document}
+\section*{Page-boundary integration}
+This fixture places an annotated display close to the bottom of a page. The equation and its annotation band should move together rather than leaving a callout detached on the previous page.
+
+\vspace*{0.58\textheight}
+A short paragraph is deliberately placed near the page bottom immediately before the display.
+\begin{annotatedequation}[numbered]
+y=\eqmark[blue]{base}{f_\theta(x)}+\eqmark[orange]{corr}{\lambda g(x)}
+\eqannotate{base}{Base prediction}
+\eqannotate{corr}{Correction below the equation}
+\end{annotatedequation}
+The paragraph after the display must start below the complete annotation band on whichever page contains the equation.
+
+\section*{Manual boundary case}
+The second case repeats the check for manual placement.
+\vspace*{0.38\textheight}
+\begin{annotatedequation}
+E=\eqmark[green]{energy}{mc^2}
+\eqannotatemanual[xshift=20mm,yshift=-18mm]{energy}{Manual callout near a page boundary}
+\end{annotatedequation}
+Following text should remain below the manually placed label.
+\end{document}

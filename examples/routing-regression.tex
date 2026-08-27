@@ -1,0 +1,34 @@
+\documentclass{article}
+\usepackage[margin=0.85in]{geometry}
+\usepackage{eqannotate}
+\pagestyle{empty}
+\begin{document}
+\section*{Aligned target heads}
+\renewcommand\eqannotatemaxshift{0pt}
+\eqannotatecolortheme{mono}
+\eqannotatecalloutstyle{arrow}
+\begin{annotatedequation}
+F=\eqmark{a}{a}+\eqmark{b}{b}
+\eqannotate[prefer=above]{a}{Inner annotation label}
+\eqannotate[prefer=above]{b}{Outer annotation label}
+\end{annotatedequation}
+
+\section*{Separated route tracks: leader}
+\renewcommand\eqannotatemaxshift{5em}
+\eqannotatecalloutstyle{leader}
+\begin{annotatedequation}
+F=\eqmark{a}{a}+\eqmark{b}{b}+\eqmark{c}{c}
+\eqannotate[prefer=above]{a}{Left label}
+\eqannotate[prefer=above]{b}{Middle label}
+\eqannotate[prefer=above]{c}{Right label}
+\end{annotatedequation}
+
+\section*{Separated route tracks: arrow}
+\eqannotatecalloutstyle{arrow}
+\begin{annotatedequation}
+F=\eqmark{a}{a}+\eqmark{b}{b}+\eqmark{c}{c}
+\eqannotate[prefer=above]{a}{Left label}
+\eqannotate[prefer=above]{b}{Middle label}
+\eqannotate[prefer=above]{c}{Right label}
+\end{annotatedequation}
+\end{document}

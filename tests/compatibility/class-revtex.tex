@@ -1,0 +1,16 @@
+\documentclass[reprint,amsmath,amssymb]{revtex4-2}
+\usepackage{eqannotate}
+\begin{document}
+\title{EqAnnotate REVTeX Smoke}\author{Anonymous}\maketitle
+\begin{annotatedequation}[numbered]
+E=\eqmark[blue]{kin}{\frac{p^2}{2m}}+\eqmark[orange]{pot}{V(x)}\label{eq:rev}
+\eqannotate{kin}{Kinetic energy}\eqannotate{pot}{Potential energy}
+\end{annotatedequation}
+
+\begin{annotatedmultline}
+\eqmark[blue]{classml}{\mathcal L}=A+B+C\\
+{}+D+\eqmark[green]{classtail}{E+F}
+\eqannotate{classml}{Objective}
+\eqannotate{classtail}{Tail terms}
+\end{annotatedmultline}
+\end{document}

@@ -1,0 +1,32 @@
+\documentclass[twocolumn]{article}
+\usepackage{eqannotate}
+\begin{document}
+
+\begin{annotatedgather}[numbered]
+\eqmark[blue]{ga}{a}=b+c,\\
+\eqmark[orange]{gb}{d}=e+f,\\
+g=\eqmark[green]{gc}{h+i}
+\eqannotate{ga}{First gathered quantity}
+\eqannotate{gb}{Second gathered quantity}
+\eqannotate{gc}{Third gathered quantity}
+\label{eq:gather-smoke}
+\end{annotatedgather}
+Eq.~\ref{eq:gather-smoke}.
+
+\begin{annotatedmultline}[numbered]
+\eqmark[blue]{ml}{\mathcal L}=A+B+C+D+E+F\\
+{}+G+H+\eqmark[orange]{tail}{I+J+K}
+\eqannotate{ml}{Long objective}
+\eqannotate{tail}{Final group}
+\label{eq:multline-smoke}
+\end{annotatedmultline}
+Eq.~\ref{eq:multline-smoke}.
+
+\begin{annotatedmultline}
+\shoveleft{\eqmark[blue]{sa}{A+B+C}=D+E+F}\\
+\shoveright{G+H=\eqmark[orange]{sb}{I+J}}
+\eqannotate{sa}{Left-shoved group}
+\eqannotate{sb}{Right-shoved group}
+\end{annotatedmultline}
+
+\end{document}

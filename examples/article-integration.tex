@@ -1,0 +1,96 @@
+\documentclass[11pt]{article}
+\usepackage[margin=25mm]{geometry}
+\usepackage{amsmath,amssymb,booktabs}
+\usepackage{eqannotate}
+\title{EqAnnotate Article-Flow Integration Fixture}
+\author{Integration Test}
+\date{}
+\newcommand{\demotext}{Modern scientific papers often mix prose, displayed mathematics, cross-references, tables, and figures on the same page. A useful equation annotation package must therefore behave as part of the document flow rather than as an isolated drawing. In particular, annotation space should remain attached to the equation, nearby paragraphs should not collide with callouts, and ordinary numbering and references should continue to work.}
+\begin{document}
+\maketitle
+\begin{abstract}
+This synthetic article checks EqAnnotate inside continuous prose. It intentionally combines automatic and manual annotations, numbered displays, long labels, multiple displays, floats, and multi-line mathematics.
+\end{abstract}
+
+\section{Introduction}
+\demotext
+
+\demotext
+
+The first annotated display is referenced as Eq.~\eqref{eq:flow}. Text immediately before the display should remain visually separated from the upper callouts.
+\begin{annotatedequation}[numbered]
+\frac{dx_t}{dt}=\eqmark[blue]{velocity}{v_\theta(x_t,t)}+\eqmark[orange]{guidance}{\lambda g(x_t,t)}
+\label{eq:flow}
+\eqannotate{velocity}{Learned velocity field}
+\eqannotate{guidance}{Guidance correction}
+\end{annotatedequation}
+The paragraph after Eq.~\eqref{eq:flow} begins immediately after the package-managed lower band. The spacing should look intentional, without either colliding with the annotation or creating an obviously detached block of white space. \demotext
+
+\begin{figure}[t]
+\centering
+\rule{0.82\linewidth}{24mm}
+\caption{A placeholder float used to check interaction between normal page layout and annotated displays.}
+\label{fig:placeholder}
+\end{figure}
+
+\section{Mixed Automatic and Manual Placement}
+Figure~\ref{fig:placeholder} is a normal float. The next equation deliberately keeps two terms under automatic control while moving one difficult callout manually.
+\begin{annotatedequation}[numbered]
+\mathcal{L}=\eqmark[blue]{data}{\mathcal{L}_{\mathrm{data}}}
++\eqmark[orange]{reg}{\lambda\mathcal{L}_{\mathrm{reg}}}
++\eqmark[green]{aux}{\gamma\mathcal{L}_{\mathrm{aux}}}
+\label{eq:loss}
+\eqannotate{data}{Data fidelity}
+\eqannotate{reg}{Regularizer}
+\eqannotatemanual[xshift=25mm,yshift=-16mm]{aux}{Manual auxiliary term}
+\end{annotatedequation}
+The manual label should reserve enough document space on its own; the author should not need to add a separate \verb|\vspace|. This is important because manual placement is intended as an escape hatch, not an abandonment of EqAnnotate's document integration.
+
+\begin{table}[b]
+\centering
+\begin{tabular}{lcc}
+\toprule
+Setting & Automatic & Manual \\
+\midrule
+Placement & yes & explicit \\
+Space reservation & yes & yes \\
+Theme inheritance & yes & yes \\
+\bottomrule
+\end{tabular}
+\caption{Expected behavior of the two placement paths.}
+\end{table}
+
+\demotext
+
+\section{Consecutive Displays and Long Labels}
+Two annotated displays may occur with only a short sentence between them. Their reserved bands should not merge into an uncontrolled vertical gap.
+\begin{annotatedequation}
+p(x)=\frac{1}{\sqrt{2\pi}\eqmark[blue]{sigma}{\sigma}}
+\exp\left(-\frac{(x-\eqmark[yellow]{mu}{\mu})^2}{2\sigma^2}\right)
+\eqannotate{mu}{Mean}
+\eqannotate{sigma}{Scale}
+\end{annotatedequation}
+A short bridge sentence separates the displays.
+\begin{annotatedequation}
+\hat y=\eqmark[blue]{predictor}{f_\theta(x)}+\eqmark[orange]{residual}{r_\phi(x)}
+\eqannotate{predictor}{Primary prediction produced by the learned model before the residual correction is applied}
+\eqannotate{residual}{Residual correction}
+\end{annotatedequation}
+The long annotation should wrap within the active text width and the following prose should start below the measured wrapped label. \demotext
+
+\section{Multi-line Mathematics}
+The aligned wrapper is tested inside ordinary prose rather than on a standalone gallery page.
+\begin{annotatedalign}[numbered]
+r_0 &= \eqmark[blue]{initial}{b-Ax_0},\\
+p_k &= M^{-1}r_k,\\
+x_{k+1} &= x_k+\eqmark[orange]{step}{\alpha_k p_k}
+\label{eq:iter}
+\eqannotate{initial}{Initial residual}
+\eqannotate{step}{State update}
+\end{annotatedalign}
+Equation~\eqref{eq:iter} has one number for the whole aligned block by design. \demotext
+
+\section{Conclusion}
+\demotext
+
+\end{document}

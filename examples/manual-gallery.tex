@@ -1,0 +1,64 @@
+\documentclass{article}
+\usepackage[margin=22mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{eqannotate}
+\pagestyle{empty}
+\begin{document}
+\section*{Manual escape-hatch validation}
+
+\subsection*{Colorful + leader: four directions}
+\eqannotatecolortheme{colorful}
+\eqannotatecalloutstyle{leader}
+\begin{annotatedequation}
+F=\eqmark[blue]{a}{a}+\eqmark[orange]{b}{b}+\eqmark[green]{c}{c}+\eqmark[purple]{d}{d}
+\eqannotatemanual[xshift=-18mm,yshift=14mm]{a}{upper left}
+\eqannotatemanual[xshift=18mm,yshift=14mm][bend right=18]{b}{upper right}
+\eqannotatemanual[xshift=-18mm,yshift=-14mm]{c}{lower left}
+\eqannotatemanual[xshift=18mm,yshift=-14mm]{d}{lower right}
+\end{annotatedequation}
+
+\subsection*{Mono + arrow}
+\eqannotatecolortheme{mono}
+\eqannotatecalloutstyle{arrow}
+\begin{annotatedequation}
+y=\eqmark[blue]{base}{f_\theta(x)}+\eqmark[orange]{corr}{\lambda g(x)}
+\eqannotatemanual[xshift=-15mm,yshift=15mm]{base}{Base model}
+\eqannotatemanual[xshift=17mm,yshift=-15mm]{corr}{Correction}
+\end{annotatedequation}
+
+\subsection*{Automatic + manual in one display}
+\eqannotatecolortheme{colorful}
+\eqannotatecalloutstyle{leader}
+\begin{annotatedequation}
+L=\eqmark[blue]{fit}{L_{\rm fit}}+\eqmark[orange]{reg}{\lambda L_{\rm reg}}+\eqmark[green]{aux}{\gamma L_{\rm aux}}
+\eqannotate{fit}{Fit loss}
+\eqannotate{reg}{Regularizer}
+\eqannotatemanual[xshift=22mm,yshift=-17mm]{aux}{Manually placed auxiliary term}
+\end{annotatedequation}
+
+\subsection*{Manual overrides automatic for the same target}
+\begin{annotatedequation}
+q=\eqmark[yellow]{z}{z^2}+1
+\eqannotate{z}{Automatic label that should be suppressed}
+\eqannotatemanual[xshift=20mm,yshift=13mm]{z}{Manual override}
+\end{annotatedequation}
+
+\subsection*{Manual in aligned block}
+\eqannotatecolortheme{mono}
+\eqannotatecalloutstyle{arrow}
+\begin{annotatedalign}
+r_0 &= \eqmark[blue]{rzero}{b-Ax_0},\\
+r_{k+1} &= r_k-\eqmark[orange]{alpha}{\alpha_k}Ap_k
+\eqannotatemanual[xshift=-24mm,yshift=15mm]{rzero}{Initial residual}
+\eqannotatemanual[xshift=22mm,yshift=-15mm]{alpha}{Step size}
+\end{annotatedalign}
+
+\subsection*{Manual long label with explicit text width}
+\eqannotatecolortheme{colorful}
+\eqannotatecalloutstyle{leader}
+\begin{annotatedequation}
+J=\eqmark[teal]{term}{\mathbb{E}_{x\sim p}[\ell(x)]}
+\eqannotatemanual[xshift=28mm,yshift=18mm,text width=35mm]{term}{A deliberately longer manually positioned annotation with an explicit text width}
+\end{annotatedequation}
+
+\end{document}

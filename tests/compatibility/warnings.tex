@@ -1,0 +1,23 @@
+\documentclass[twocolumn]{article}
+\usepackage[margin=0.65in]{geometry}
+\usepackage{eqannotate}
+\begin{document}
+\section*{Missing mark: should skip, not fail}
+\begin{annotatedequation}
+y=\eqmark[blue]{ok}{x}+1
+\eqannotate{ok}{Valid target}
+\eqannotate{missing}{This target does not exist}
+\end{annotatedequation}
+
+\section*{Duplicate mark and annotation: should warn}
+\begin{annotatedequation}
+y=\eqmark[blue]{dup}{x}+\eqmark[orange]{dup}{z}
+\eqannotate{dup}{First text}\eqannotate{dup}{Last text wins}
+\end{annotatedequation}
+
+\section*{Long label: should wrap, not fail}
+\begin{annotatedequation}
+y=\eqmark[blue]{wide}{x}
+\eqannotate{wide}{This deliberately extremely long annotation should now wrap automatically inside the current two-column text area without a package failure}
+\end{annotatedequation}
+\end{document}

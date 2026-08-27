@@ -1,0 +1,16 @@
+\documentclass[sigconf,nonacm]{acmart}
+\usepackage{eqannotate}
+\begin{document}
+\title{EqAnnotate ACM Smoke}\author{Anonymous}\maketitle
+\begin{annotatedequation}[numbered]
+\mathcal L=\eqmark[cyan]{fit}{\mathcal L_{\rm fit}}+\lambda\eqmark[orange]{reg}{\mathcal L_{\rm reg}}\label{eq:acm}
+\eqannotate{fit}{Data term}\eqannotate{reg}{Regularizer}
+\end{annotatedequation}
+
+\begin{annotatedmultline}
+\eqmark[blue]{classml}{\mathcal L}=A+B+C\\
+{}+D+\eqmark[green]{classtail}{E+F}
+\eqannotate{classml}{Objective}
+\eqannotate{classtail}{Tail terms}
+\end{annotatedmultline}
+\end{document}

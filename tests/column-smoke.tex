@@ -1,0 +1,13 @@
+\documentclass[twocolumn]{article}
+\usepackage[margin=0.7in,columnsep=0.3in]{geometry}
+\usepackage{eqannotate}
+\pagestyle{empty}
+\begin{document}
+\eqannotatecolortheme{colorful}
+\eqannotatecalloutstyle{arrow}
+\begin{annotatedequation}
+\eqmark[blue]{l}{\alpha}+\beta+\gamma+\delta+\epsilon+\eqmark[red]{r}{\zeta}
+\eqannotate[prefer=above]{l}{Long label near the left column edge}
+\eqannotate[prefer=below]{r}{Long label near the right column edge}
+\end{annotatedequation}
+\end{document}

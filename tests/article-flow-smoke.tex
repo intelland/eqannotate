@@ -1,0 +1,12 @@
+\documentclass{article}
+\usepackage{eqannotate}
+\begin{document}
+A paragraph before the display verifies normal document flow and spacing.
+\begin{annotatedequation}[numbered]
+y=\eqmark[blue]{base}{f(x)}+\eqmark[orange]{corr}{g(x)}
+\label{eq:flow-smoke}
+\eqannotate{base}{Base}
+\eqannotatemanual[xshift=14mm,yshift=-13mm]{corr}{Manual correction}
+\end{annotatedequation}
+A paragraph after Eq.~\ref{eq:flow-smoke} verifies that automatic and manual labels reserve document space without explicit vertical skips.
+\end{document}

@@ -1,0 +1,36 @@
+\documentclass[twocolumn]{article}
+\usepackage[margin=0.7in,columnsep=0.35in]{geometry}
+\usepackage{eqannotate}
+\begin{document}
+
+\section*{Gather wrapper}
+\begin{annotatedgather}[numbered]
+\eqmark[blue]{ga}{a}=b+c,\\
+\eqmark[orange]{gb}{d}=e+f,\\
+g=\eqmark[green]{gc}{h+i}
+\eqannotate{ga}{First gathered quantity}
+\eqannotate{gb}{Second gathered quantity}
+\eqannotate{gc}{Third gathered quantity}
+\label{eq:gather-compat}
+\end{annotatedgather}
+Reference: Eq.~\ref{eq:gather-compat}.
+
+\section*{Native multline wrapper}
+\begin{annotatedmultline}[numbered]
+\eqmark[blue]{ml}{\mathcal L}=A+B+C+D+E\\
+{}+F+G+\eqmark[orange]{tail}{H+I}
+\eqannotate{ml}{Long objective}
+\eqannotate{tail}{Final terms}
+\label{eq:multline-compat}
+\end{annotatedmultline}
+Reference: Eq.~\ref{eq:multline-compat}.
+
+\section*{Shove controls}
+\begin{annotatedmultline}
+\shoveleft{\eqmark[blue]{sa}{A+B+C}=D+E+F}\\
+\shoveright{G+H=\eqmark[orange]{sb}{I+J}}
+\eqannotate{sa}{Left-shoved group}
+\eqannotate{sb}{Right-shoved group}
+\end{annotatedmultline}
+
+\end{document}

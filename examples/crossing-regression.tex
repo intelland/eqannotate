@@ -1,0 +1,28 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{eqannotate}
+\pagestyle{empty}
+\begin{document}
+\section*{Crossing-aware dense layout}
+\eqannotatecolortheme{mono}
+\eqannotatecalloutstyle{leader}
+\begin{annotatedequation}
+H=\eqmark{a}{a}+\eqmark{b}{b}+\eqmark{c}{c}+\eqmark{d}{d}+\eqmark{e}{e}+\eqmark{f}{f}
+\eqannotate[prefer=above]{a}{Wide annotation A}
+\eqannotate[prefer=above]{b}{B}
+\eqannotate[prefer=above]{c}{A substantially wider annotation C}
+\eqannotate[prefer=above]{d}{D}
+\eqannotate[prefer=above]{e}{Wide annotation E}
+\eqannotate[prefer=above]{f}{F}
+\end{annotatedequation}
+
+\eqannotatecalloutstyle{arrow}
+\begin{annotatedequation}
+J=\eqmark{u}{u}+\eqmark{v}{v}+\eqmark{w}{w}+\eqmark{x}{x}+\eqmark{y}{y}
+\eqannotate[prefer=below]{u}{Wide U label}
+\eqannotate[prefer=below]{v}{V}
+\eqannotate[prefer=below]{w}{A much wider W label}
+\eqannotate[prefer=below]{x}{X}
+\eqannotate[prefer=below]{y}{Wide Y label}
+\end{annotatedequation}
+\end{document}

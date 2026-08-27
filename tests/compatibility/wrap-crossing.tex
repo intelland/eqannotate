@@ -1,0 +1,33 @@
+\documentclass[twocolumn]{article}
+\usepackage[margin=0.7in,columnsep=0.35in]{geometry}
+\usepackage{eqannotate}
+\pagestyle{empty}
+\begin{document}
+\section*{Automatic wrapping}
+\begin{annotatedequation}
+F=\eqmark[blue]{a}{a}+\eqmark[orange]{b}{b}+\eqmark[green]{c}{c}
+\eqannotate[prefer=above]{a}{A deliberately verbose annotation that must wrap automatically inside the active column}
+\eqannotate[prefer=above]{b}{Another long explanation whose wrapped height participates in lane spacing}
+\eqannotate[prefer=above]{c}{Compact label}
+\end{annotatedequation}
+Paragraph after the display.
+
+\section*{Local linewidth}
+\begin{minipage}{.78\linewidth}
+\begin{annotatedequation}
+G=\eqmark{p}{p}+q+\eqmark{r}{r}
+\eqannotate[prefer=below]{p}{A long annotation constrained by this narrower local linewidth}
+\eqannotate[prefer=below]{r}{Second label}
+\end{annotatedequation}
+\end{minipage}
+
+\newpage
+\section*{Crossing-aware relaxation}
+\begin{annotatedequation}
+H=\eqmark{u}{u}+\eqmark{v}{v}+\eqmark{w}{w}+\eqmark{x}{x}
+\eqannotate[prefer=above]{u}{Wide U label}
+\eqannotate[prefer=above]{v}{V}
+\eqannotate[prefer=above]{w}{A wider W label}
+\eqannotate[prefer=above]{x}{X}
+\end{annotatedequation}
+\end{document}

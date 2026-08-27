@@ -1,0 +1,10 @@
+\documentclass[fleqn,leqno]{article}
+\usepackage{eqannotate}
+\begin{document}
+See Eq.~\ref{eq:fleqn}.
+\begin{annotatedequation}[numbered]
+F(x)=\eqmark[blue]{integral.term}{\int_0^x f(t)\,dt}+\eqmark[orange]{bias:term}{b}\label{eq:fleqn}
+\eqannotate{integral.term}{Accumulated term}
+\eqannotate{bias:term}{Bias}
+\end{annotatedequation}
+\end{document}

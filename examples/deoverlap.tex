@@ -1,0 +1,16 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{eqannotate}
+\pagestyle{empty}
+\begin{document}
+\section*{Bounded horizontal de-overlap}
+\eqannotatecolortheme{mono}
+\eqannotatecalloutstyle{leader}
+\begin{annotatedequation}
+F=\eqmark{a}{a}+\eqmark{b}{b}+\eqmark{c}{c}
+\eqannotate[prefer=above]{a}{Left label}
+\eqannotate[prefer=above]{b}{Middle label}
+\eqannotate[prefer=above]{c}{Right label}
+\end{annotatedequation}
+The labels overlap at their target-centered positions, but fit in one lane after bounded horizontal displacement.
+\end{document}

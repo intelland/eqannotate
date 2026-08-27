@@ -1,0 +1,17 @@
+\documentclass{article}
+\usepackage{eqannotate}
+\begin{document}
+\eqannotatecalloutstyle{arrow}
+\begin{annotatedequation}
+y=\eqmark[blue]{a}{a}+\eqmark[orange]{b}{b}
+\eqannotate{a}{Automatic}
+\eqannotatemanual[xshift=14mm,yshift=-13mm][bend left=12]{b}{Manual}
+\end{annotatedequation}
+Text after the display.
+\begin{annotatedalign}
+r_0&=\eqmark[green]{r}{b-Ax_0},\\
+x_1&=x_0+\eqmark[purple]{s}{\alpha p}
+\eqannotatemanual[xshift=-16mm,yshift=13mm]{r}{Initial}
+\eqannotatemanual[xshift=16mm,yshift=-13mm]{s}{Step}
+\end{annotatedalign}
+\end{document}

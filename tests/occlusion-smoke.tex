@@ -1,0 +1,12 @@
+\documentclass{article}
+\usepackage{eqannotate}
+\begin{document}
+\renewcommand\eqannotatemaxshift{0pt}
+\eqannotatecolortheme{mono}
+\eqannotatecalloutstyle{arrow}
+\begin{annotatedequation}
+F=\eqmark{a}{a}+\eqmark{b}{b}
+\eqannotate[prefer=above]{a}{Inner annotation label}
+\eqannotate[prefer=above]{b}{Outer annotation label}
+\end{annotatedequation}
+\end{document}
