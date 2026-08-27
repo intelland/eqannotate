@@ -12,28 +12,44 @@
 
 EqAnnotate 用于为行间公式添加说明标注。你只需标记公式中的目标项并写出标签内容，package 会自动处理标签位置、换行、间距、避让、分层和连接线走向。
 
-```latex
-\eqmark[blue]{velocity}{v_\theta(x,t)}
-\eqannotate{velocity}{速度场}
-```
-
 <p align="center">
-  <img src="docs/images/basic.png" alt="EqAnnotate 公式标注示例" width="760">
+  <img src="docs/images/hero-complex.png"
+       alt="EqAnnotate 围绕多项损失函数自动安排四个标注"
+       width="900">
 </p>
 
-## 为什么需要 EqAnnotate？
-
-[`annotate-equations`](https://github.com/st--/annotate-equations) 建立了很实用的 TikZ 公式标注工作流：标记公式项、添加说明、再绘制标注。EqAnnotate 在这一思路上继续向前一步，把常见的空间布局决策交给 package。
-
-手动标注时，调用者往往还要决定标注在公式上方还是下方、`x/y shift`、anchor、lane 与连接线路径。EqAnnotate 的常用途径只保留目标项和标签这两个语义信息：
+EqAnnotate 让源码保持在数学语义层面，同时自动安排一组更密集的公式标注。
 
 ```latex
-\eqmark[blue]{velocity}{v_\theta(x,t)}
-\eqannotate{velocity}{速度场}
+\begin{annotatedequation}
+\mathcal{L}(\theta)
+=
+\eqmark[blue]{rec}{\lambda_{\mathrm{rec}}\mathcal{L}_{\mathrm{rec}}}
++
+\eqmark[orange]{adv}{\lambda_{\mathrm{adv}}\mathcal{L}_{\mathrm{adv}}}
++
+\eqmark[green]{cyc}{\lambda_{\mathrm{cyc}}\mathcal{L}_{\mathrm{cyc}}}
++
+\eqmark[purple]{reg}{\lambda_{\mathrm{reg}}\|\theta\|_2^2}
+
+\eqannotate{rec}{Reconstruction fidelity}
+\eqannotate{adv}{Adversarial realism}
+\eqannotate{cyc}{Cycle consistency}
+\eqannotate{reg}{Regularization}
+\end{annotatedequation}
 ```
 
-因此，它的关键不只是命令更短，而是：**EqAnnotate 让调用者做更少的空间决策。**
+## 同样的标注意图，更少的空间决策
 
+<p align="center">
+  <img src="docs/images/layout-comparison.png"
+       alt="同一组四标签公式在低层公式标注工作流与 EqAnnotate 中的对比"
+       width="1000">
+</p>
+
+[`annotate-equations`](https://github.com/st--/annotate-equations) 提供了成熟而方便的 TikZ 公式标注工作流，也是 EqAnnotate 最直接的基础。EqAnnotate 在此基础上把常见使用方式再向上抽象一层：调用者主要声明“标哪一项、写什么说明”，placement、换行、避让、lane、column 边界和 connector routing 交给布局器处理。
+
+区别不只是少写几个参数，而是调用者需要参与的空间决策更少。这个对比关注抽象层次：手动 primitives 会暴露 placement 选择，而 EqAnnotate 让常用途径保持声明式。
 ## 对作者和 Agent 的意义
 
 对作者而言，更少的坐标微调意味着更短、更容易维护的 LaTeX 源码，也让整篇文档的标注风格更一致。

@@ -12,39 +12,44 @@
 
 EqAnnotate is a self-layouting LaTeX package for annotated display equations. Mark a mathematical term, declare its label, and let the package handle placement, wrapping, spacing, de-overlap, lane allocation, and connector routing.
 
+<p align="center">
+  <img src="docs/images/hero-complex.png"
+       alt="EqAnnotate automatically lays out four annotations around a multi-term objective"
+       width="900">
+</p>
+
+EqAnnotate keeps the source focused on mathematical meaning while automatically arranging a genuinely dense annotation set.
+
 ```latex
 \begin{annotatedequation}
-p(x)=\frac{1}{\sqrt{2\pi}\eqmark[blue]{sigma}{\sigma}}
-\exp\left(-\frac{(x-\eqmark[yellow]{mu}{\mu})^2}{2\sigma^2}\right)
+\mathcal{L}(\theta)
+=
+\eqmark[blue]{rec}{\lambda_{\mathrm{rec}}\mathcal{L}_{\mathrm{rec}}}
++
+\eqmark[orange]{adv}{\lambda_{\mathrm{adv}}\mathcal{L}_{\mathrm{adv}}}
++
+\eqmark[green]{cyc}{\lambda_{\mathrm{cyc}}\mathcal{L}_{\mathrm{cyc}}}
++
+\eqmark[purple]{reg}{\lambda_{\mathrm{reg}}\|\theta\|_2^2}
 
-\eqannotate{mu}{Mean}
-\eqannotate{sigma}{Scale}
+\eqannotate{rec}{Reconstruction fidelity}
+\eqannotate{adv}{Adversarial realism}
+\eqannotate{cyc}{Cycle consistency}
+\eqannotate{reg}{Regularization}
 \end{annotatedequation}
 ```
 
+## Same annotation intent, fewer spatial decisions
+
 <p align="center">
-  <img src="docs/images/basic.png" alt="An EqAnnotate display equation with Mean and Scale callouts" width="760">
+  <img src="docs/images/layout-comparison.png"
+       alt="Comparison of a lower-level annotated-equation workflow and EqAnnotate for the same four-label formula"
+       width="1000">
 </p>
 
-## Why EqAnnotate?
+[`annotate-equations`](https://github.com/st--/annotate-equations) established a convenient TikZ-based workflow for annotated equations and is the direct foundation/predecessor of EqAnnotate. EqAnnotate moves the common workflow one abstraction level higher: the caller declares the target and label, while the layout solver handles placement, wrapping, de-overlap, lane allocation, column bounds, and connector routing.
 
-[`annotate-equations`](https://github.com/st--/annotate-equations) established a convenient TikZ-based workflow for marking a term, attaching a callout, and rendering annotated equations. EqAnnotate builds on that idea and moves the common workflow one abstraction level higher.
-
-With manual primitives, the caller commonly decides the side, offset, anchor, lane, and connector route:
-
-```latex
-\eqnmarkbox[blue]{velocity}{v_\theta(x,t)}
-\annotate[yshift=1em]{above}{velocity}{Velocity field}
-```
-
-With EqAnnotate, the caller declares the target and label:
-
-```latex
-\eqmark[blue]{velocity}{v_\theta(x,t)}
-\eqannotate{velocity}{Velocity field}
-```
-
-The key difference is not merely shorter source: **EqAnnotate asks the caller to make fewer spatial decisions.**
+The important distinction is not merely source-code length. **EqAnnotate asks the caller to make fewer spatial decisions.** The comparison is about abstraction level: manual primitives expose placement choices; EqAnnotate keeps the common path declarative.
 
 ## Why this matters for humans and agents
 
