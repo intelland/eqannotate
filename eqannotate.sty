@@ -1,6 +1,6 @@
 % eqannotate.sty -- declarative, self-layouting equation annotations
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{eqannotate}[2026/08/27 v0.1.0 Declarative equation annotations with automatic layout]
+\ProvidesPackage{eqannotate}[2026/08/27 v0.1.1-dev Declarative equation annotations with automatic layout]
 
 \RequirePackage{xcolor}
 \RequirePackage{tikz}
@@ -126,6 +126,7 @@
 \tl_new:N   \l__eqa_tmpa_tl
 \tl_new:N   \l__eqa_tmpb_tl
 \tl_new:N   \l__eqa_effective_color_tl
+\tl_new:N   \l__eqa_body_tl
 \tl_new:N   \g__eqa_color_theme_tl
 \tl_new:N   \g__eqa_callout_style_tl
 \tl_gset:Nn \g__eqa_color_theme_tl {colorful}
@@ -1430,10 +1431,21 @@
       }
   }
 
+% Blank lines inside a captured display body are tokenized as \par.
+% They carry no mathematical meaning here, but passing them to TikZ/amsmath
+% can terminate a node argument. Strip them so source formatting can contain
+% visual blank lines between the formula and annotation declarations.
+\cs_new_protected:Npn \eqa_set_clean_body:n #1
+  {
+    \tl_set:Nn \l__eqa_body_tl {#1}
+    \tl_remove_all:Nn \l__eqa_body_tl {\par}
+  }
+
 \NewDocumentEnvironment{annotatedequation}{ O{} +b }
   {
     \eqa_begin_environment:n {#1}
-    \eqa_typeset_single:n {#2}
+    \eqa_set_clean_body:n {#2}
+    \exp_args:NV \eqa_typeset_single:n \l__eqa_body_tl
     \eqa_end_environment:
   }
   {}
@@ -1443,7 +1455,8 @@
 \NewDocumentEnvironment{annotatedalign}{ O{} +b }
   {
     \eqa_begin_environment:n {#1}
-    \eqa_typeset_aligned:n {#2}
+    \eqa_set_clean_body:n {#2}
+    \exp_args:NV \eqa_typeset_aligned:n \l__eqa_body_tl
     \eqa_end_environment:
   }
   {}
@@ -1453,7 +1466,8 @@
 \NewDocumentEnvironment{annotatedgather}{ O{} +b }
   {
     \eqa_begin_environment:n {#1}
-    \eqa_typeset_gathered:n {#2}
+    \eqa_set_clean_body:n {#2}
+    \exp_args:NV \eqa_typeset_gathered:n \l__eqa_body_tl
     \eqa_end_environment:
   }
   {}
@@ -1465,7 +1479,8 @@
   {
     \eqa_begin_environment:n {#1}
     \bool_set_true:N \l__eqa_multline_bool
-    \eqa_typeset_multlined:n {#2}
+    \eqa_set_clean_body:n {#2}
+    \exp_args:NV \eqa_typeset_multlined:n \l__eqa_body_tl
     \eqa_end_environment:
   }
   {}
