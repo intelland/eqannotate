@@ -1,0 +1,33 @@
+\documentclass{article}
+\usepackage{eqannotate}
+\begin{document}
+\begin{annotatedequation}
+E=\eqmark[blue]{energy}{mc^2}
+
+\eqannotate{energy}{Mass-energy relation}
+\end{annotatedequation}
+
+\begin{annotatedalign}
+a &= \eqmark[orange]{first}{b+c},\\
+d &= \eqmark[green]{second}{e+f}
+
+\eqannotate{first}{First relation}
+\eqannotate{second}{Second relation}
+\end{annotatedalign}
+
+\begin{annotatedgather}
+u = \eqmark[blue]{velocity}{at},\\
+s = \eqmark[purple]{distance}{ut}
+
+\eqannotate{velocity}{Velocity term}
+\eqannotate{distance}{Distance term}
+\end{annotatedgather}
+
+\begin{annotatedmultline}
+F = \eqmark[orange]{head}{x_1+x_2+x_3} \\
+{} + \eqmark[green]{tail}{x_4+x_5}
+
+\eqannotate{head}{Initial contribution}
+\eqannotate{tail}{Final contribution}
+\end{annotatedmultline}
+\end{document}

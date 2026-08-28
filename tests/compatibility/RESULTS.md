@@ -1,4 +1,4 @@
-# Compatibility gate results — v0.1.0-rc2
+# Compatibility gate results — v0.1.1
 
 Tested on the current TeX Live environment with pdfLaTeX and LuaLaTeX unless stated otherwise.
 
@@ -84,7 +84,7 @@ PASS:
 - `\eqmark` / `\eqannotate` outside an EqAnnotate display -> explicit package error instead of broken remembered nodes.
 
 
-## Release-candidate edge coverage
+## Release coverage
 
 PASS:
 

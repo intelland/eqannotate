@@ -1,0 +1,45 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Check out tagged commit
+        uses: actions/checkout@v4
+      - name: Install TeX Live test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            latexmk texlive-latex-base texlive-latex-recommended \
+            texlive-latex-extra texlive-pictures texlive-publishers \
+            texlive-fonts-recommended texlive-luatex texlive-xetex
+      - name: Run core regression suite
+        run: ./tests/run.sh
+      - name: Run compatibility gate
+        run: ./tests/compatibility/run.sh
+      - name: Verify release metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          PKG_VERSION="$(sed -n 's/.*\\ProvidesPackage{eqannotate}\[[^ ]* \(v[^ ]*\) .*/\1/p' eqannotate.sty)"
+          test -n "${PKG_VERSION}"
+          test "${TAG}" = "${PKG_VERSION}"
+          grep -Fq "## ${TAG#v} " CHANGELOG.md
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release create "${GITHUB_REF_NAME}" eqannotate.sty \
+            --title "EqAnnotate ${GITHUB_REF_NAME}" \
+            --notes "EqAnnotate ${GITHUB_REF_NAME} is a maintenance release. It fixes captured display bodies containing blank source lines, adds regression coverage for that authoring style, and makes GitHub Release assets reproducible from the exact release tag. The v0.1 public API and layout behavior are otherwise unchanged."

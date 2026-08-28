@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1 — 2026-08-28
+
+Maintenance release; no public API or solver feature expansion.
+
+- Fixed captured EqAnnotate display bodies containing blank source lines so formula/annotation formatting can include ordinary empty lines safely.
+- Added regression coverage for blank-line authoring across the public display wrappers.
+- Added tag-driven GitHub Release automation that verifies package/changelog version identity and uploads `eqannotate.sty` from the exact release tag.
+- Refreshed release-facing compatibility metadata after the v0.1.0 RC cycle.
+
 ## 0.1.0 — 2026-08-27
 
 Initial public release. No solver feature expansion relative to rc1.
