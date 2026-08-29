@@ -59,6 +59,7 @@ texinputs_for() {
 
 require_command "$LATEXMK"
 require_command unzip
+require_command date
 if command -v zip >/dev/null 2>&1; then
   ZIP_CREATOR=zip
 elif command -v powershell.exe >/dev/null 2>&1 &&
@@ -69,6 +70,21 @@ elif command -v powershell.exe >/dev/null 2>&1 &&
 else
   die "a ZIP creator is required: install zip or make PowerShell Compress-Archive available"
 fi
+
+if ! SOURCE_DATE_EPOCH=$(date -u -d "$MANUAL_DATE 00:00:00 UTC" +%s); then
+  die "could not derive SOURCE_DATE_EPOCH from canonical date: $DATE"
+fi
+case "$SOURCE_DATE_EPOCH" in
+  ''|*[!0-9]*)
+    die "invalid SOURCE_DATE_EPOCH derived from canonical date: $SOURCE_DATE_EPOCH"
+    ;;
+esac
+FORCE_SOURCE_DATE=1
+PDF_TRAILER_ID=$(printf '%032x' "$SOURCE_DATE_EPOCH")
+if ! printf '%s\n' "$PDF_TRAILER_ID" | grep -Eq '^[0-9a-f]{32}$'; then
+  die "could not derive a 32-digit PDF trailer ID from SOURCE_DATE_EPOCH"
+fi
+MANUAL_PRETEX="\\pdftrailerid{<$PDF_TRAILER_ID>}"
 
 BUILD=$(mktemp -d)
 CHECK=$(mktemp -d)
@@ -83,8 +99,10 @@ esac
 rm -rf "$DIST"
 mkdir -p "$STAGE/examples"
 
-TEXINPUTS="$(texinputs_for "$ROOT")" \
+SOURCE_DATE_EPOCH="$SOURCE_DATE_EPOCH" FORCE_SOURCE_DATE="$FORCE_SOURCE_DATE" \
+  TEXINPUTS="$(texinputs_for "$ROOT")" \
   "$LATEXMK" -pdf -interaction=nonstopmode -halt-on-error \
+  "-usepretex=$MANUAL_PRETEX" \
   -outdir="$BUILD/manual" "$ROOT/eqannotate.tex"
 
 MANUAL_PDF="$BUILD/manual/eqannotate.pdf"
@@ -118,19 +136,24 @@ unzip -q "$ARCHIVE" -d "$CHECK"
 CHECK_ROOT="$CHECK/eqannotate"
 (
   cd "$CHECK_ROOT"
-  TEXINPUTS="$(texinputs_for "$CHECK_ROOT")" \
+  SOURCE_DATE_EPOCH="$SOURCE_DATE_EPOCH" FORCE_SOURCE_DATE="$FORCE_SOURCE_DATE" \
+    TEXINPUTS="$(texinputs_for "$CHECK_ROOT")" \
     "$LATEXMK" -pdf -interaction=nonstopmode -halt-on-error \
+    "-usepretex=$MANUAL_PRETEX" \
     -outdir="$CHECK/manual" eqannotate.tex
 )
 for example in basic style-gallery amsmath-gallery manual-gallery; do
   (
     cd "$CHECK_ROOT/examples"
-    TEXINPUTS="$(texinputs_for ..)" \
+    SOURCE_DATE_EPOCH="$SOURCE_DATE_EPOCH" FORCE_SOURCE_DATE="$FORCE_SOURCE_DATE" \
+      TEXINPUTS="$(texinputs_for ..)" \
       "$LATEXMK" -pdf -interaction=nonstopmode -halt-on-error \
       -outdir="$CHECK/$example" "$example.tex"
   )
 done
 
 printf '%s\n' "Version metadata check passed: $VERSION ($DATE)"
+printf '%s\n' "Manual PDF source date: $MANUAL_DATE (SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH)"
+printf '%s\n' "Manual PDF trailer ID is derived from SOURCE_DATE_EPOCH"
 printf '%s\n' "Root/manual PDF synchronization passed"
 printf '%s\n' "Built and verified $ARCHIVE"
