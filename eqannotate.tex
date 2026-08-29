@@ -1,0 +1,205 @@
+\documentclass[11pt]{article}
+\usepackage[margin=28mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{eqannotate}
+\hypersetup{colorlinks=true,linkcolor=blue!50!black,urlcolor=blue!50!black,pdftitle={EqAnnotate User Manual}}
+\newcommand{\pkg}{\textsf{eqannotate}}
+\newcommand{\cmd}[1]{\texttt{\string#1}}
+\title{\pkg\\\large Declarative equation annotations with automatic layout}
+\author{EqAnnotate contributors}
+\date{Version v0.1.1 \quad 2026-08-28}
+\begin{document}
+\maketitle
+\begin{abstract}
+\pkg{} is a LaTeX package for labelled display mathematics. Mark a term,
+declare its meaning, and let the package arrange the annotation. This manual
+documents the stable v0.1.1 user interface.
+\end{abstract}
+\tableofcontents
+
+\section{Introduction}
+EqAnnotate is for \emph{display} equations. Its normal workflow is: mark a
+term, declare a label, then compile to convergence. It is automatic first,
+with a manual fallback for exceptional formulas. No shell escape, Python,
+network access, or external service is needed.
+
+\section{Installation}
+Place \texttt{eqannotate.sty} beside the main document and write:
+\begin{verbatim}
+\usepackage{eqannotate}
+\end{verbatim}
+For a user TeX tree, install it below \texttt{tex/latex/eqannotate/}.
+Requirements are LaTeX2e, \textsf{amsmath}, \textsf{xcolor}, TikZ with
+\texttt{tikzmark}, \texttt{arrows.meta}, and \texttt{calc}, plus
+\textsf{expl3}/\textsf{xparse}. The tested engines are pdfLaTeX, LuaLaTeX,
+and XeLaTeX.
+
+\section{Quick start}
+\begin{annotatedequation}
+p(x)=\frac{1}{\sqrt{2\pi}\eqmark[blue]{sigma}{\sigma}}
+\exp\left(-\frac{(x-\eqmark[yellow]{mu}{\mu})^2}{2\sigma^2}\right)
+
+\eqannotate{mu}{Mean}
+\eqannotate{sigma}{Scale}
+\end{annotatedequation}
+Mark identifiers are local to one display. The declarations may follow the
+formula in any order.
+
+\section{Core API}
+\subsection{Marking terms}
+\begin{verbatim}
+\eqmark[<color>]{<id>}{<math>}
+\end{verbatim}
+The optional color is used by the colorful theme. IDs are semantic names local
+to one wrapper. Duplicate marks keep the first target and issue a warning.
+
+\subsection{Automatic labels}
+\begin{verbatim}
+\eqannotate[prefer=auto|above|below]{<id>}{<label>}
+\end{verbatim}
+The optional \texttt{prefer} value is a soft side preference, not a coordinate.
+A label with no matching mark is skipped with a warning.
+
+\section{Display environments}
+Four wrappers are available:
+\begin{description}
+\item[\texttt{annotatedequation}] A single display.
+\item[\texttt{annotatedalign}] A multi-row aligned display.
+\item[\texttt{annotatedgather}] A centered multi-row display.
+\item[\texttt{annotatedmultline}] A long display split across rows.
+\end{description}
+They are unnumbered by default. Adding \texttt{[numbered]} gives the complete
+wrapper one outer equation number; ordinary \cmd{\label} and \cmd{\ref} work
+as usual.
+
+\begin{annotatedalign}[numbered]
+r_0 &= \eqmark[blue]{initial}{x_0-y},\\
+r_{k+1} &= r_k-\eqmark[orange]{update}{\alpha_k A p_k},\\
+x_{k+1} &= x_k+\eqmark[green]{step}{\alpha_k p_k}
+
+\eqannotate{initial}{Initial residual}
+\eqannotate{update}{Residual correction}
+\eqannotate{step}{State update}
+\label{eq:aligned-example}
+\end{annotatedalign}
+Equation~\ref{eq:aligned-example} is one numbered aligned block.
+
+\begin{annotatedgather}
+E(x)=\eqmark[blue]{energy}{D(x)}+R(x),\\
+\nabla E(x)=\eqmark[orange]{gradient}{\nabla D(x)+\nabla R(x)}
+
+\eqannotate{energy}{Energy objective}
+\eqannotate{gradient}{Objective gradient}
+\end{annotatedgather}
+
+\begin{annotatedmultline}
+\mathcal{L}(\theta)=\eqmark[blue]{reconstruction}{\lambda_1\mathcal{L}_{\rm rec}}
+{}+\eqmark[orange]{adversarial}{\lambda_2\mathcal{L}_{\rm adv}}\\
+{}+\lambda_3\mathcal{L}_{\rm cyc}
+{}+\eqmark[green]{prior}{\lambda_4\mathcal{R}(\theta)}
+
+\eqannotate{reconstruction}{Reconstruction term}
+\eqannotate{adversarial}{Adversarial term}
+\eqannotate{prior}{Prior regularizer}
+\end{annotatedmultline}
+The multline wrapper retains multline-style first/last-row alignment. It also
+supports the native commands \cmd{\shoveleft} and \cmd{\shoveright}.
+
+\section{Automatic layout}
+Automatic placement chooses sides, wraps long labels, performs bounded
+horizontal de-overlap, allocates lanes, routes connectors, observes the active
+local \cmd{\linewidth}, and reserves vertical space. These are layout
+strategies, not an unconditional promise that every imaginable document layout
+can be solved without intervention.
+
+\begin{annotatedequation}
+\mathcal{J}=\eqmark[blue]{data}{\mathcal{L}_{\rm data}}
+{}+\eqmark[orange]{regularization}{\lambda\mathcal{L}_{\rm reg}}
+{}+\eqmark[green]{auxiliary}{\gamma\mathcal{L}_{\rm aux}}
+{}+\eqmark[purple]{prior}{\rho\mathcal{R}(\theta)}
+
+\eqannotate{data}{Data fidelity}
+\eqannotate{regularization}{Regularization}
+\eqannotate{auxiliary}{Auxiliary objective}
+\eqannotate{prior}{Prior term}
+\end{annotatedequation}
+
+\section{Themes and callout styles}
+\begin{verbatim}
+\eqannotatecolortheme{colorful} % or mono
+\eqannotatecalloutstyle{leader} % or arrow
+\end{verbatim}
+In \texttt{colorful}, marked terms have pastel backgrounds and related labels
+and connectors share their colors. In \texttt{mono}, term backgrounds are
+removed and callouts are black. A \texttt{leader} is a plain connector; an
+\texttt{arrow} points toward the target.
+
+\section{Manual fallback}
+\begin{verbatim}
+\eqannotatemanual[<label TikZ options>][<to-path options>]
+  {<id>}{<label>}
+\end{verbatim}
+Use manual placement only when a formula needs exact control:
+\begin{annotatedequation}
+y=\eqmark[blue]{model}{f_\theta(x)}+\eqmark[orange]{correction}{\lambda g(x)}
+
+\eqannotate{model}{Base model}
+\eqannotatemanual[xshift=18mm,yshift=12mm][bend right=18]
+  {correction}{Manually positioned correction}
+\end{annotatedequation}
+Manual labels retain the theme, callout style, masking, and vertical reservation,
+but bypass automatic collision avoidance, column clamping, lane assignment, and
+crossing optimization for that label. A manual declaration wins over an
+automatic declaration for the same ID and emits a warning.
+
+\section{Numbering and references}
+Each numbered wrapper has one outer number. Native per-row numbering for
+aligned/gathered wrappers and arbitrary custom \cmd{\tag} support are outside
+v0.1. Place \cmd{\label} inside a numbered wrapper and reference it normally.
+
+\section{Compilation and convergence}
+Use a normal workflow such as:
+\begin{verbatim}
+latexmk -pdf main.tex
+\end{verbatim}
+When compiling by hand, rerun while the log reports
+\begin{quote}
+\ttfamily Rerun LaTeX for optimized annotation spacing.
+\end{quote}
+The package uses remembered positions and the \texttt{.aux} file, so a fresh
+document commonly needs multiple passes.
+
+\section{Diagnostics}
+Diagnostics cover a missing mark, duplicate mark, duplicate annotation,
+automatic/manual duplication, and commands used outside an EqAnnotate display.
+The last case is an explicit package error; the other authoring mistakes have
+readable warning behavior.
+
+\section{Known limitations and v0.1 boundaries}
+EqAnnotate does not annotate inline mathematics. v0.1 has no per-row numbering
+for multi-line wrappers, arbitrary \cmd{\tag}, or \cmd{\intertext}/
+\cmd{\shortintertext} inside its wrappers. On a non-white page, set:
+\begin{verbatim}
+\renewcommand\eqannotatebackgroundcolor{<color>}
+\end{verbatim}
+Automatic page-background detection is not provided.
+
+\section{Complete examples}
+The distribution includes the following runnable public-interface examples:
+\begin{itemize}
+\item \texttt{examples/basic.tex}
+\item \texttt{examples/style-gallery.tex}
+\item \texttt{examples/amsmath-gallery.tex}
+\item \texttt{examples/manual-gallery.tex}
+\end{itemize}
+They illustrate use of the public interface, not implementation knowledge.
+
+\section{License and project links}
+EqAnnotate is available under the MIT License. The
+\href{https://github.com/intelland/eqannotate}{GitHub repository} hosts source
+and releases; report problems through the
+\href{https://github.com/intelland/eqannotate/issues}{issue tracker}.
+\end{document}

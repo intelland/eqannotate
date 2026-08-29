@@ -6,6 +6,8 @@
 *.synctex.gz
 *.toc
 *.pdf
+!/eqannotate.pdf
+/dist/ctan/
 *.spl
 *Notes.bib
 *.nav

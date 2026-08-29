@@ -1,6 +1,6 @@
 # EqAnnotate
 
-[English](README.md) | [简体中文](README.zh-CN.md)
+[English](README.md) | [简体中文](https://github.com/intelland/eqannotate/blob/main/README.zh-CN.md)
 
 [![CI](https://github.com/intelland/eqannotate/actions/workflows/ci.yml/badge.svg)](https://github.com/intelland/eqannotate/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/intelland/eqannotate)](https://github.com/intelland/eqannotate/releases/latest)
@@ -13,7 +13,7 @@
 EqAnnotate is a self-layouting LaTeX package for annotated display equations. Mark a mathematical term, declare its label, and let the package handle placement, wrapping, spacing, de-overlap, lane allocation, and connector routing.
 
 <p align="center">
-  <img src="docs/images/hero-complex.png"
+  <img src="https://raw.githubusercontent.com/intelland/eqannotate/main/docs/images/hero-complex.png"
        alt="EqAnnotate automatically lays out four annotations around a multi-term objective"
        width="900">
 </p>
@@ -42,7 +42,7 @@ EqAnnotate keeps the source focused on mathematical meaning while automatically 
 ## Same annotation intent, fewer spatial decisions
 
 <p align="center">
-  <img src="docs/images/layout-comparison.png"
+  <img src="https://raw.githubusercontent.com/intelland/eqannotate/main/docs/images/layout-comparison.png"
        alt="Comparison of a lower-level annotated-equation workflow and EqAnnotate for the same four-label formula"
        width="1000">
 </p>
@@ -59,7 +59,17 @@ For coding and writing agents, the useful decisions are semantic: which term mat
 
 > In normal use, both humans and agents specify what a term means; EqAnnotate decides where the annotation goes.
 
-The optional [EqAnnotate skill](skills/eqannotate/SKILL.md) guides Codex- and Claude Code-style workflows toward automatic layout, convergence checks, and manual placement only for genuinely difficult formulas. The package itself remains ordinary LaTeX/TikZ with no model or API dependency.
+The optional [EqAnnotate skill](https://github.com/intelland/eqannotate/tree/main/skills/eqannotate) guides Codex- and Claude Code-style workflows toward automatic layout, convergence checks, and manual placement only for genuinely difficult formulas. The package itself remains ordinary LaTeX/TikZ with no model or API dependency.
+
+## Release information
+
+- Current stable version: v0.1.1
+- License: MIT
+- Requires: LaTeX2e, amsmath, xcolor, TikZ/tikzmark, expl3/xparse
+- Tested engines: pdfLaTeX, LuaLaTeX, XeLaTeX
+- Repository: https://github.com/intelland/eqannotate
+- Issues: https://github.com/intelland/eqannotate/issues
+- Documentation: [eqannotate.pdf](eqannotate.pdf)
 
 ## Install
 
@@ -73,7 +83,7 @@ The optional [EqAnnotate skill](skills/eqannotate/SKILL.md) guides Codex- and Cl
 \usepackage{eqannotate}
 ```
 
-See [Installation](docs/installation.md) for user-wide TeX Live installation and [User Guide](docs/usage.md) for the complete workflow.
+See the [installation guide](https://github.com/intelland/eqannotate/blob/main/docs/installation.md) for user-wide TeX Live installation and the [user guide](https://github.com/intelland/eqannotate/blob/main/docs/usage.md) for the complete workflow.
 
 ## Core API
 
@@ -97,7 +107,7 @@ For an exceptional formula, retain direct control for just that annotation:
 Automatic labels measure and wrap themselves, respect the active `\linewidth`, reserve article space, and route connectors outside the formula. Manual labels retain the active theme, callout style, masking, and space reservation.
 
 <p align="center">
-  <img src="docs/images/style-gallery.png" alt="EqAnnotate color and callout style combinations" width="760">
+  <img src="https://raw.githubusercontent.com/intelland/eqannotate/main/docs/images/style-gallery.png" alt="EqAnnotate color and callout style combinations" width="760">
 </p>
 
 ## Roadmap
@@ -113,11 +123,12 @@ For a colored page today, set `\eqannotatebackgroundcolor` to the page color.
 
 ## Documentation
 
-- [Installation](docs/installation.md)
-- [User Guide](docs/usage.md)
-- [Public API Contract](docs/api-contract.md)
-- [Layout Design](docs/layout.md)
-- [Validation](docs/validation.md)
+- [Package manual](eqannotate.pdf)
+- [Installation](https://github.com/intelland/eqannotate/blob/main/docs/installation.md)
+- [User Guide](https://github.com/intelland/eqannotate/blob/main/docs/usage.md)
+- [Public API Contract](https://github.com/intelland/eqannotate/blob/main/docs/api-contract.md)
+- [Layout Design](https://github.com/intelland/eqannotate/blob/main/docs/layout.md)
+- [Validation](https://github.com/intelland/eqannotate/blob/main/docs/validation.md)
 
 ## Acknowledgements
 
