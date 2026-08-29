@@ -10,7 +10,7 @@
 
 > 告诉 EqAnnotate 要标注什么，而不是标签应该放在哪里。
 
-EqAnnotate 用于为行间公式添加说明标注。你只需标记公式中的目标项并写出标签内容，package 会自动处理标签位置、换行、间距、避让、分层和连接线走向。
+EqAnnotate 是一个为带标注行间公式提供自动布局的 LaTeX 宏包。标记数学项并声明标签后，宏包会处理位置、换行、间距、避让、分层和连接线路由。
 
 <p align="center">
   <img src="docs/images/hero-complex.png"
@@ -18,7 +18,7 @@ EqAnnotate 用于为行间公式添加说明标注。你只需标记公式中的
        width="900">
 </p>
 
-EqAnnotate 让源码保持在数学语义层面，同时自动安排一组更密集的公式标注。
+EqAnnotate 让源代码聚焦于数学含义，同时自动安排一组密集的公式标注。
 
 ```latex
 \begin{annotatedequation}
@@ -47,18 +47,29 @@ EqAnnotate 让源码保持在数学语义层面，同时自动安排一组更密
        width="1000">
 </p>
 
-[`annotate-equations`](https://github.com/st--/annotate-equations) 提供了成熟而方便的 TikZ 公式标注工作流，也是 EqAnnotate 最直接的基础。EqAnnotate 在此基础上把常见使用方式再向上抽象一层：调用者主要声明“标哪一项、写什么说明”，placement、换行、避让、lane、column 边界和 connector routing 交给布局器处理。
+[`annotate-equations`](https://github.com/st--/annotate-equations) 提供了方便的 TikZ 公式标注工作流，也是 EqAnnotate 的直接基础。EqAnnotate 将常见工作流提升到更高的抽象层次：调用者声明目标和标签，布局器处理位置、换行、避让、分层、列边界和连接线路由。
 
-区别不只是少写几个参数，而是调用者需要参与的空间决策更少。这个对比关注抽象层次：手动 primitives 会暴露 placement 选择，而 EqAnnotate 让常用途径保持声明式。
+核心区别在于抽象层次：EqAnnotate 保持常见标注工作流的声明式表达，由布局器处理位置和路由。
+
 ## 对作者和 Agent 的意义
 
 对作者而言，更少的坐标微调意味着更短、更容易维护的 LaTeX 源码，也让整篇文档的标注风格更一致。
 
-对 Codex、Claude Code 等 coding/writing agent 而言，识别“哪个项重要”“它表示什么”“标签该怎么写”属于语义和符号结构任务；持续调节 `xshift`、`yshift`、anchor、lane 与 routing 则是脆弱的二维视觉任务。EqAnnotate 将后者交给布局 solver。
+对 Codex、Claude Code 等编程和写作 Agent 而言，重要的决策在语义层面：哪些项重要、它们表示什么、标签如何表述。位置、分层和连接线路由属于二维布局任务，由 EqAnnotate 处理。
 
-> 在通常用法中，人和 agent 都只说明一个公式项的含义；EqAnnotate 决定标注放在哪里。
+> 在通常用法中，人和 Agent 都只说明一个公式项的含义；EqAnnotate 决定标注放在哪里。
 
-仓库内的 [Agent Skill](skills/eqannotate/SKILL.md) 会引导 agent 优先使用自动布局、编译至收敛，并只在困难公式中使用手动路径。package 本身仍是纯 LaTeX/TikZ，不依赖模型或 API。
+可选的 [EqAnnotate Agent Skill](skills/eqannotate/SKILL.md) 为 Codex、Claude Code 等工作流提供自动布局、收敛检查和手动放置指导。EqAnnotate 本身是 LaTeX/TikZ 宏包；Agent Skill 为可选项。
+
+## 发布信息
+
+- 当前稳定版本：v0.1.1
+- 许可证：MIT
+- 依赖：LaTeX2e、amsmath、xcolor、TikZ/tikzmark、expl3/xparse
+- 已测试引擎：pdfLaTeX、LuaLaTeX、XeLaTeX
+- 仓库：https://github.com/intelland/eqannotate
+- Issues：https://github.com/intelland/eqannotate/issues
+- 正式手册：[eqannotate.pdf](eqannotate.pdf)
 
 ## 安装
 
@@ -86,14 +97,16 @@ EqAnnotate 让源码保持在数学语义层面，同时自动安排一组更密
 
 支持 `annotatedequation`、`annotatedalign`、`annotatedgather` 和 `annotatedmultline` 四种行间公式环境，每种都可使用可选的 `[numbered]`。
 
-自动路径负责测量、换行、列宽适配、标签避让、连接线与正文留白。若某个公式确实需要精确控制，可以只对它使用手动接口：
+如需只对一项标注进行直接控制，可使用：
 
 ```latex
 \eqannotatemanual[xshift=12mm,yshift=10mm][bend right=18]
   {velocity}{速度场}
 ```
 
-## Roadmap
+自动标签会测量并换行，适应当前 `\linewidth`，为正文预留空间，并在公式外布线。手动标签保留活动主题、引出线样式、遮罩和空间预留。
+
+## 路线图
 
 - [ ] 行内公式标注
 - [ ] 更丰富的多行编号
@@ -102,10 +115,11 @@ EqAnnotate 让源码保持在数学语义层面，同时自动安排一组更密
 - [ ] 更好的非白色背景处理
 - [ ] CTAN 发布
 
-当前若使用彩色页面，请将 `\eqannotatebackgroundcolor` 设置为页面颜色。
+如需使用彩色页面，请将 `\eqannotatebackgroundcolor` 设置为页面颜色。
 
 ## 文档
 
+- [正式手册](eqannotate.pdf)
 - [安装说明](docs/installation.md)
 - [用户指南](docs/usage.md)
 - [公开 API 合约](docs/api-contract.md)
@@ -114,11 +128,11 @@ EqAnnotate 让源码保持在数学语义层面，同时自动安排一组更密
 
 ## 致谢
 
-EqAnnotate 直接建立在 [`annotate-equations`](https://github.com/st--/annotate-equations) 展示的公式标注工作流与 TikZ 技术之上，并在其上加入低配置的自动布局层。
+EqAnnotate 建立在 [`annotate-equations`](https://github.com/st--/annotate-equations) 展示的公式标注工作流与 TikZ 技术之上，并增加了低配置的自动布局层。
 
-[`annotated_latex_equations`](https://github.com/synercys/annotated_latex_equations) 的彩色公式标注示例为本项目的视觉表达提供了启发。[`ScholarPhi`](https://github.com/allenai/scholarphi) 在标签测量、布局和连接线路由方面是工程与设计参考；EqAnnotate 的实现并非直接派生自 ScholarPhi。
+[`annotated_latex_equations`](https://github.com/synercys/annotated_latex_equations) 的彩色公式标注示例为本项目的视觉表达提供了启发。[`ScholarPhi`](https://github.com/allenai/scholarphi) 为分离标签测量、布局和引线生成提供了工程参考。
 
-同时感谢 PGF/TikZ、`tikzmark` 与 `amsmath` 等 LaTeX 生态项目。
+感谢 PGF/TikZ、`tikzmark` 与 `amsmath` 等 LaTeX 生态项目。
 
 ## 开发
 
@@ -127,7 +141,7 @@ EqAnnotate 直接建立在 [`annotate-equations`](https://github.com/st--/annota
 ./tests/compatibility/run.sh
 ```
 
-两套测试都要求布局真正收敛，而不只是固定次数编译不报错。
+两套测试都会运行至布局状态收敛。
 
 ## 许可证
 

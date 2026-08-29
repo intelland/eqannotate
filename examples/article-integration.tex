@@ -5,11 +5,11 @@
 \title{EqAnnotate Article-Flow Integration Fixture}
 \author{Integration Test}
 \date{}
-\newcommand{\demotext}{Modern scientific papers often mix prose, displayed mathematics, cross-references, tables, and figures on the same page. A useful equation annotation package must therefore behave as part of the document flow rather than as an isolated drawing. In particular, annotation space should remain attached to the equation, nearby paragraphs should not collide with callouts, and ordinary numbering and references should continue to work.}
+\newcommand{\demotext}{Modern scientific papers often mix prose, displayed mathematics, cross-references, tables, and figures on the same page. EqAnnotate keeps annotation space attached to the equation while preserving document flow, readable nearby paragraphs, ordinary numbering, and references.}
 \begin{document}
 \maketitle
 \begin{abstract}
-This synthetic article checks EqAnnotate inside continuous prose. It intentionally combines automatic and manual annotations, numbered displays, long labels, multiple displays, floats, and multi-line mathematics.
+This synthetic article checks EqAnnotate inside continuous prose. It combines automatic and manual annotations, numbered displays, long labels, multiple displays, floats, and multi-line mathematics.
 \end{abstract}
 
 \section{Introduction}
@@ -24,7 +24,7 @@ The first annotated display is referenced as Eq.~\eqref{eq:flow}. Text immediate
 \eqannotate{velocity}{Learned velocity field}
 \eqannotate{guidance}{Guidance correction}
 \end{annotatedequation}
-The paragraph after Eq.~\eqref{eq:flow} begins immediately after the package-managed lower band. The spacing should look intentional, without either colliding with the annotation or creating an obviously detached block of white space. \demotext
+The package-managed lower band separates the following paragraph from the callouts and keeps page spacing cohesive. \demotext
 
 \begin{figure}[t]
 \centering
@@ -34,7 +34,7 @@ The paragraph after Eq.~\eqref{eq:flow} begins immediately after the package-man
 \end{figure}
 
 \section{Mixed Automatic and Manual Placement}
-Figure~\ref{fig:placeholder} is a normal float. The next equation deliberately keeps two terms under automatic control while moving one difficult callout manually.
+Figure~\ref{fig:placeholder} is a normal float. The next equation keeps two terms under automatic control and places one callout manually.
 \begin{annotatedequation}[numbered]
 \mathcal{L}=\eqmark[blue]{data}{\mathcal{L}_{\mathrm{data}}}
 +\eqmark[orange]{reg}{\lambda\mathcal{L}_{\mathrm{reg}}}
@@ -44,7 +44,7 @@ Figure~\ref{fig:placeholder} is a normal float. The next equation deliberately k
 \eqannotate{reg}{Regularizer}
 \eqannotatemanual[xshift=25mm,yshift=-16mm]{aux}{Manual auxiliary term}
 \end{annotatedequation}
-The manual label should reserve enough document space on its own; the author should not need to add a separate \verb|\vspace|. This is important because manual placement is intended as an escape hatch, not an abandonment of EqAnnotate's document integration.
+The manual label participates in document-space reservation, so surrounding article text follows it without an additional spacing command.
 
 \begin{table}[b]
 \centering
@@ -63,7 +63,7 @@ Theme inheritance & yes & yes \\
 \demotext
 
 \section{Consecutive Displays and Long Labels}
-Two annotated displays may occur with only a short sentence between them. Their reserved bands should not merge into an uncontrolled vertical gap.
+Two annotated displays may occur with only a short sentence between them. Their reserved bands remain distinct with controlled vertical spacing.
 \begin{annotatedequation}
 p(x)=\frac{1}{\sqrt{2\pi}\eqmark[blue]{sigma}{\sigma}}
 \exp\left(-\frac{(x-\eqmark[yellow]{mu}{\mu})^2}{2\sigma^2}\right)
@@ -76,10 +76,10 @@ A short bridge sentence separates the displays.
 \eqannotate{predictor}{Primary prediction produced by the learned model before the residual correction is applied}
 \eqannotate{residual}{Residual correction}
 \end{annotatedequation}
-The long annotation should wrap within the active text width and the following prose should start below the measured wrapped label. \demotext
+The long annotation wraps within the active text width, and the following prose begins below its measured label. \demotext
 
 \section{Multi-line Mathematics}
-The aligned wrapper is tested inside ordinary prose rather than on a standalone gallery page.
+The aligned wrapper is tested inside ordinary prose.
 \begin{annotatedalign}[numbered]
 r_0 &= \eqmark[blue]{initial}{b-Ax_0},\\
 p_k &= M^{-1}r_k,\\
@@ -88,7 +88,7 @@ x_{k+1} &= x_k+\eqmark[orange]{step}{\alpha_k p_k}
 \eqannotate{initial}{Initial residual}
 \eqannotate{step}{State update}
 \end{annotatedalign}
-Equation~\eqref{eq:iter} has one number for the whole aligned block by design. \demotext
+Equation~\eqref{eq:iter} has one number for the complete aligned block. \demotext
 
 \section{Conclusion}
 \demotext

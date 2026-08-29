@@ -9,7 +9,7 @@
 \email{test@example.com}
 \begin{document}
 \begin{abstract}
-This fixture checks article-scale spacing, narrow-column wrapping, numbering, and manual fallback in an ACM-style two-column paper.
+This fixture checks article-scale spacing, narrow-column wrapping, numbering, and manual placement in an ACM-style two-column paper.
 \end{abstract}
 \maketitle
 \section{Introduction}
@@ -20,7 +20,7 @@ y=\eqmark[blue]{base}{f_\theta(x)}+\eqmark[orange]{corr}{\lambda g(x)}
 \eqannotate{base}{Base prediction}
 \eqannotate{corr}{A longer correction description that should wrap within the current ACM column}
 \end{annotatedequation}
-Text after Eq.~\eqref{eq:acm} should remain below the lower annotation band. The next example uses manual placement without any explicit spacing command in the article source.
+Text after Eq.~\eqref{eq:acm} remains below the lower annotation band. The next example uses manual placement while preserving the article's normal spacing.
 \eqannotatecolortheme{mono}
 \eqannotatecalloutstyle{arrow}
 \begin{annotatedequation}
@@ -28,7 +28,7 @@ E=\eqmark[green]{kinetic}{\frac12mv^2}+\eqmark[purple]{potential}{V(x)}
 \eqannotate{kinetic}{Kinetic term}
 \eqannotatemanual[xshift=13mm,yshift=-13mm]{potential}{Manual potential term}
 \end{annotatedequation}
-Normal prose resumes after the manual annotation. This final paragraph verifies that no overlay reaches into surrounding text and that the display remains visually part of the article rather than an isolated gallery object.
+Normal prose resumes after the manual annotation. This final paragraph checks overlay clearance from surrounding text and verifies the display within article flow.
 \section{Conclusion}
 Both automatic and manual annotation paths should preserve the surrounding article layout.
 \end{document}

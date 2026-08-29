@@ -2,7 +2,7 @@
 
 ## Before tagging
 
-1. Keep `docs/api-contract.md` frozen unless a deliberate compatibility decision is made.
+1. Review `docs/api-contract.md` for versioned public API changes.
 2. Run:
 
 ```bash
@@ -23,4 +23,5 @@ For example, extract `eqannotate.sty` from the release tag, upload that file to 
 
 ## CTAN
 
-CTAN packaging is intentionally deferred until after the GitHub release has had a period of real-world use.
+Build the preview archive with `scripts/build-ctan-package.sh` and review
+`dist/ctan/eqannotate-ctan.zip` before a CTAN submission.

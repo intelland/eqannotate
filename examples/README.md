@@ -4,7 +4,7 @@
 
 - `basic.tex` — minimal automatic annotations plus a denser four-term formula.
 - `style-gallery.tex` — `colorful` / `mono` crossed with `leader` / `arrow`.
-- `manual-gallery.tex` — manual escape hatch and automatic/manual mixing.
+- `manual-gallery.tex` — manual placement and mixed automatic/manual annotations.
 
 ## Layout behavior
 

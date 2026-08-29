@@ -49,17 +49,17 @@ EqAnnotate keeps the source focused on mathematical meaning while automatically 
 
 [`annotate-equations`](https://github.com/st--/annotate-equations) established a convenient TikZ-based workflow for annotated equations and is the direct foundation/predecessor of EqAnnotate. EqAnnotate moves the common workflow one abstraction level higher: the caller declares the target and label, while the layout solver handles placement, wrapping, de-overlap, lane allocation, column bounds, and connector routing.
 
-The important distinction is not merely source-code length. **EqAnnotate asks the caller to make fewer spatial decisions.** The comparison is about abstraction level: manual primitives expose placement choices; EqAnnotate keeps the common path declarative.
+The difference is the abstraction level: EqAnnotate keeps the common annotation workflow declarative, with placement and routing handled by the layout solver.
 
 ## Why this matters for humans and agents
 
 For human authors, fewer coordinates and TikZ adjustments mean shorter, more maintainable source and a more consistent annotation style.
 
-For coding and writing agents, the useful decisions are semantic: which term matters, what it means, and what its label should say. Continuous layout tuning such as `xshift`, `yshift`, anchors, lanes, and routing paths is a separate visual task. EqAnnotate gives that task to the layout solver.
+For coding and writing agents, the useful decisions are semantic: which term matters, what it means, and what its label should say. EqAnnotate handles the associated placement, lane allocation, and connector routing.
 
 > In normal use, both humans and agents specify what a term means; EqAnnotate decides where the annotation goes.
 
-The optional [EqAnnotate skill](https://github.com/intelland/eqannotate/tree/main/skills/eqannotate) guides Codex- and Claude Code-style workflows toward automatic layout, convergence checks, and manual placement only for genuinely difficult formulas. The package itself remains ordinary LaTeX/TikZ with no model or API dependency.
+The optional [EqAnnotate skill](https://github.com/intelland/eqannotate/tree/main/skills/eqannotate) guides Codex- and Claude Code-style workflows toward automatic layout, convergence checks, and manual placement when exact control is useful. EqAnnotate itself is a LaTeX/TikZ package; the agent skill is optional.
 
 ## Release information
 
@@ -97,7 +97,7 @@ See the [installation guide](https://github.com/intelland/eqannotate/blob/main/d
 
 The display wrappers are `annotatedequation`, `annotatedalign`, `annotatedgather`, and `annotatedmultline`; each accepts optional `[numbered]`.
 
-For an exceptional formula, retain direct control for just that annotation:
+Use direct control for an annotation when exact placement is useful:
 
 ```latex
 \eqannotatemanual[xshift=12mm,yshift=10mm][bend right=18]
@@ -134,7 +134,7 @@ For a colored page today, set `\eqannotatebackgroundcolor` to the page color.
 
 EqAnnotate builds directly on the annotated-equation workflow and TikZ techniques demonstrated by [`annotate-equations`](https://github.com/st--/annotate-equations), adding a lower-configuration self-layouting layer.
 
-It also draws inspiration from [`annotated_latex_equations`](https://github.com/synercys/annotated_latex_equations) for colorful annotated-equation presentation. [`ScholarPhi`](https://github.com/allenai/scholarphi) was an engineering and design reference for separating label measurement, placement, and leader routing; EqAnnotate does not derive its implementation from ScholarPhi.
+It also draws inspiration from [`annotated_latex_equations`](https://github.com/synercys/annotated_latex_equations) for colorful annotated-equation presentation. [`ScholarPhi`](https://github.com/allenai/scholarphi) was an engineering reference for separating label measurement, placement, and leader routing.
 
 Thank you to the LaTeX ecosystem around PGF/TikZ, `tikzmark`, and `amsmath`.
 
@@ -145,7 +145,7 @@ Thank you to the LaTeX ecosystem around PGF/TikZ, `tikzmark`, and `amsmath`.
 ./tests/compatibility/run.sh
 ```
 
-Both suites require layout convergence rather than merely surviving a fixed number of TeX passes.
+Both suites run until layout state converges.
 
 ## License
 

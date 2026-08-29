@@ -1,63 +1,53 @@
-# EqAnnotate v0.1.0-rc1 validation
+# Validation
 
-This gate validates two areas that were not covered deeply by the earlier formula galleries: the manual escape hatch and behavior inside continuous articles.
+EqAnnotate is validated through automated regression, document-class coverage, rendered examples, and release checks.
 
-## Manual escape hatch
+## Automated regression
 
-The manual path is intentionally separate from the automatic solver. Its v0.1 contract is:
+- The core convergence suite covers the public display wrappers and automatic layout under pdfLaTeX and LuaLaTeX.
+- Selected smoke tests run under XeLaTeX.
+- The compatibility suite covers formula structures, two-column and local-`\linewidth` layouts, `hyperref` / `cleveref`, `fleqn` / `leqno`, Unicode math, warnings, and include checkpoints.
+- Test documents compile until their layout state converges, with a maximum of five TeX runs.
 
-```latex
-\eqannotatemanual[<label TikZ node options>][<TikZ to-path options>]{<id>}{<label>}
-```
+## Scientific document classes
 
-The second optional argument is advanced and may be omitted. Existing calls with one optional argument keep the original syntax.
+The compatibility corpus includes:
 
-Validated behavior:
+- `IEEEtran`;
+- `acmart`;
+- `revtex4-2`;
+- `elsarticle`; and
+- `beamer`.
 
-| Case | Result |
-| --- | --- |
-| manual label above / below / left / right | PASS |
-| colorful + leader | PASS |
-| mono + arrow | PASS |
-| manual label inherits the marked term color in colorful mode | PASS |
-| manual label becomes black in mono mode | PASS |
-| straight manual connector | PASS |
-| manually bent connector via `bend left/right` | PASS |
-| automatic and manual labels in one display | PASS |
-| manual and automatic declarations for the same target | PASS; manual wins with warning |
-| manual-only display reserves vertical article space | PASS |
-| manual label with explicit `text width` | PASS |
-| manual annotations in `annotatedalign` | PASS |
-| duplicate manual declaration | PASS; last declaration wins with warning |
-| missing manual target | PASS; warning and skip |
-| manual command outside an EqAnnotate display | PASS; explicit package error |
-| pdfLaTeX manual smoke test | PASS |
-| LuaLaTeX manual smoke test | PASS |
+## Layout coverage
 
-Manual placement deliberately does **not** receive automatic collision avoidance, horizontal clamping, lane assignment, or crossing minimization. Those are the geometry choices the caller has explicitly taken over. The package still handles theming, connector rendering, label masking, and vertical space reservation.
+Regression and compatibility tests cover:
 
-## Article-flow integration
+- long-label wrapping and de-overlap;
+- lane allocation, vertical reservation, and connector routing;
+- label masking and themes;
+- `annotatedequation`, `annotatedalign`, `annotatedgather`, and `annotatedmultline`;
+- numbering and references;
+- two-column and local-width layouts;
+- manual placement and connector routes; and
+- `\include` / `\includeonly` workflows.
 
-The package was compiled and visually inspected as part of full pages rather than isolated formula galleries.
+## Visual validation
 
-| Fixture | Coverage | Result |
-| --- | --- | --- |
-| standard `article`, 3 pages | title/abstract/sections, continuous prose, numbered equations and refs, auto+manual, long wrapped label, aligned block, figure/table floats, consecutive displays | PASS |
-| standard `article`, two columns | narrow-column wrapping, column-aware automatic layout, manual fallback, dense annotations, surrounding prose | PASS |
-| `IEEEtran` conference article | compact two-column article flow, numbering/ref, wrapped label, manual fallback | PASS |
-| `acmart` sigconf article | compact two-column article flow, wrapped label, manual fallback | PASS |
-| page-boundary fixture | automatic and manual labels near page boundaries, following prose below the reserved band | PASS |
-| pdfLaTeX article-flow smoke | automatic + manual + numbering/reference | PASS |
-| LuaLaTeX article-flow smoke | automatic + manual + numbering/reference | PASS |
+The Visual Validation workflow compiles and renders five canonical examples:
 
-Visual inspection found no annotation/prose collisions, detached overlays, column overflow in automatic placement, or lost equation references. Normal LaTeX float reordering remains under the document class/page builder and is intentionally not altered by EqAnnotate.
+- `basic`;
+- `style-gallery`;
+- `manual-gallery`;
+- `amsmath-gallery`; and
+- `article-integration`.
 
-## Regression status
+Each page is rendered to PNG at 150 DPI and uploaded as the `eqannotate-visual-validation` GitHub Actions artifact for visual review. The examples cover automatic layout, themes, manual placement, amsmath wrappers, and continuous article flow.
 
-The pre-existing automatic-layout smoke suite still passes under pdfLaTeX after the manual-path changes: single column, two column, occlusion masks, bounded de-overlap, micro-track routing, numbered displays, wrapping, crossing-aware relaxation, and amsmath multi-line wrappers.
+## Release validation
 
-## Remaining boundaries
+The tag-triggered release workflow runs the core and compatibility suites, verifies that the tag, package header, and changelog version agree, and creates the release asset from the exact tagged `eqannotate.sty` file.
 
-- Manual placement can intentionally move a label outside the column or onto another label; this is expected because manual mode bypasses the automatic solver.
-- The second manual optional argument accepts TikZ `to[...]` routing options, not arbitrary standalone TikZ statements. It covers straight, bent, and `out`/`in` style routes without exposing EqAnnotate's internal node names.
-- Inline-math annotations, per-row native `align`/`gather` numbering, arbitrary custom `\tag`, and automatic non-white page-background detection remain outside v0.1.
+## Current status
+
+The v0.1.1 regression, compatibility, and visual-validation gates pass.

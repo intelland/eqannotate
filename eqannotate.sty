@@ -10,8 +10,8 @@
 \usetikzlibrary{tikzmark,arrows.meta,calc}
 \newcounter{eqannotateenv}% internal, checkpointed by \include/\includeonly
 
-% Public style/layout knobs. The default API intentionally avoids exposing
-% continuous coordinates; these are document-wide tuning parameters.
+% Public style/layout knobs. The public API uses semantic declarations and
+% document-wide tuning parameters for continuous geometry.
 \newcommand\eqannotatefont{\sffamily\footnotesize}
 \newcommand\eqannotateshade{20}
 \newcommand\eqannotatebasegap{1.45em}
@@ -29,9 +29,9 @@
 \newcommand\eqannotateroutetrackspan{6.4pt}
 \newcommand\eqannotatemaxshift{5.0em}
 \newcommand\eqannotatebackgroundcolor{white}
-% Public API intentionally stops at semantic declarations, soft side hints,
-% theme/callout switches, and the manual escape hatch. Geometry knobs above
-% remain advanced document-wide tuning parameters rather than per-label input.
+% The public API provides semantic declarations, soft side hints, theme/callout
+% switches, and manual placement. Geometry knobs above are advanced
+% document-wide tuning parameters.
 
 \tikzset{
   eqannotate/label/.style={font=\eqannotatefont,align=center,inner xsep=2pt,inner ysep=1.5pt,draw=none,fill=\eqannotatebackgroundcolor},
@@ -462,8 +462,8 @@
 \cs_new_protected:Npn \eqa_validate_annotations:
   {
     % Manual declarations are validated first. If the same target is declared
-    % through both interfaces, manual placement deliberately wins: it is the
-    % escape hatch for cases where the automatic solver is not desired.
+    % through both interfaces, manual placement takes precedence and uses its
+    % supplied label geometry and connector route.
     \seq_clear:N \l__eqa_valid_manual_ids_seq
     \seq_map_inline:Nn \g__eqa_manual_ids_seq
       {
@@ -871,7 +871,7 @@
 \cs_new_protected:Npn \eqa_compute_lane_geometry:N #1
   {
     % Wrapped labels can be taller than one line. Each lane advances by the
-    % greater of the historical lane step and (actual lane height + gap).
+    % greater of the configured lane step and (actual lane height + gap).
     \prop_clear:N \l__eqa_lane_height_prop
     \prop_clear:N \l__eqa_lane_offset_prop
     \seq_map_inline:Nn #1
@@ -954,7 +954,7 @@
   {
     \prop_get:NnN \l__eqa_track_prop {#1}\l__eqa_tmpa_tl
     \int_set:Nn \l__eqa_track_int {\l__eqa_tmpa_tl}
-    % Center the bundle of micro-tracks around the historical corridor.
+    % Center the bundle of micro-tracks around the configured routing corridor.
     % Formula: (i - (N+1)/2) * step, expressed without floating point.
     \dim_set:Nn \l__eqa_routeoffset_dim
       { \fp_eval:n
@@ -1162,8 +1162,8 @@
       {
         \begin{tikzpicture}[remember~picture,overlay]
           \eqa_extract_geometry:
-          % Automatic labels keep the full solver. Manual labels bypass it but
-          % still share the measured equation geometry and final render pass.
+          % Automatic labels use the full solver. Manual labels use their
+          % supplied geometry in the shared measured-equation and final-render pass.
           \seq_if_empty:NF \g__eqa_ids_seq
             {
               \eqa_choose_sides:
@@ -1207,12 +1207,10 @@
     \eqa_write_reserve:
   }
 
-% Manual escape hatch. The syntax stays intentionally close to raw TikZ:
-% node options position the annotation relative to the marked target. Unlike
-% the early prototype, manual annotations are collected and rendered in the
-% same final overlay pass as automatic annotations. This lets them inherit
-% themes/callout styles, stay behind the label mask, and contribute to the
-% .aux-based vertical space reservation.
+% Manual labels use TikZ node and to-path options for geometry. They are
+% collected and rendered in the same final overlay pass as automatic annotations,
+% so they use the active theme/callout style, label mask, and .aux-based
+% vertical space reservation.
 \NewDocumentCommand \eqannotatemanual { O{yshift=1cm} O{} m m }
   {
     \eqaIfAmsmathMeasuringTF
@@ -1450,8 +1448,8 @@
   }
   {}
 
-% Multi-line display support with one optional equation number for the whole
-% aligned block. Per-row align numbering remains intentionally unsupported.
+% Multi-line display support with one optional equation number for the complete
+% aligned block.
 \NewDocumentEnvironment{annotatedalign}{ O{} +b }
   {
     \eqa_begin_environment:n {#1}
@@ -1461,8 +1459,8 @@
   }
   {}
 
-% Centered multi-line block. Like annotatedalign, [numbered] gives one number
-% for the whole block rather than native gather's number-per-row semantics.
+% Centered multi-line block. Like annotatedalign, [numbered] gives the complete
+% block one number.
 \NewDocumentEnvironment{annotatedgather}{ O{} +b }
   {
     \eqa_begin_environment:n {#1}

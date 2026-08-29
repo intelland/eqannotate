@@ -9,7 +9,7 @@
 This fixture checks annotated equations inside a realistic two-column IEEE-style article with normal prose, references to equations, and mixed automatic/manual placement.
 \end{abstract}
 \section{Introduction}
-Annotated displays should coexist with the compact spacing of a conference paper. The package must respect the current column width and must not require ad-hoc spacing commands in the surrounding article. The following paragraph provides enough text to exercise normal column flow before the first display. Scientific writing frequently alternates between definitions, displayed equations, and explanatory prose, so an annotation package should behave predictably in that sequence.
+Annotated displays should coexist with the compact spacing of a conference paper. The package respects the current column width and preserves surrounding article spacing. The following paragraph provides enough text to exercise normal column flow before the first display. Scientific writing frequently alternates between definitions, displayed equations, and explanatory prose, so an annotation package should behave predictably in that sequence.
 
 \section{Method}
 We define the update in Eq.~\eqref{eq:ieee-update}.
@@ -19,7 +19,7 @@ x_{t+1}=x_t+\eqmark[blue]{drift}{\Delta t\,v_\theta(x_t,t)}+\eqmark[orange]{cont
 \eqannotate{drift}{Learned drift}
 \eqannotate{control}{Control correction}
 \end{annotatedequation}
-The text following Eq.~\eqref{eq:ieee-update} should resume cleanly below the annotation band. A second display uses the manual escape hatch for a label whose desired location is intentionally asymmetric.
+The text following Eq.~\eqref{eq:ieee-update} should resume cleanly below the annotation band. A second display uses manual placement for a label whose desired location is asymmetric.
 \eqannotatecolortheme{mono}
 \eqannotatecalloutstyle{arrow}
 \begin{annotatedequation}
@@ -27,7 +27,7 @@ The text following Eq.~\eqref{eq:ieee-update} should resume cleanly below the an
 \eqannotate{fit}{Fit term}
 \eqannotatemanual[xshift=13mm,yshift=-13mm]{prior}{Manual prior term}
 \end{annotatedequation}
-Normal prose continues after the manual annotation without a user-provided vertical spacer. This is the key article-level integration condition for the escape hatch.
+Normal prose continues after the manual annotation through the package's reserved vertical space.
 
 \section{Results}
 The final test uses a wrapped label in the narrow column.
@@ -38,7 +38,7 @@ The final test uses a wrapped label in the narrow column.
 \eqannotate{encoder}{Encoder representation}
 \eqannotate{adapt}{Adaptation component applied to the encoded representation before downstream prediction}
 \end{annotatedequation}
-The layout should remain contained within the column and preserve readable text flow. Additional prose fills the remainder of the column so that the equation is evaluated as part of a page rather than as an isolated example. Compact article formats make unwanted whitespace especially visible, so this fixture is useful for visual regression.
+The layout should remain contained within the column and preserve readable text flow. Additional prose fills the remainder of the column to evaluate the equation in page context. Compact article formats make whitespace especially visible, so this fixture is useful for visual regression.
 
 \section{Conclusion}
 EqAnnotate is expected to keep annotation geometry local to each display while leaving the rest of the article under normal LaTeX page-building control.

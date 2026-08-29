@@ -1,6 +1,6 @@
 # Public API contract for v0.1
 
-This is the frozen public API contract for EqAnnotate v0.1. It is intentionally narrower than the implementation internals. For end-user workflows, see `docs/usage.md`.
+This document defines the stable public API for EqAnnotate v0.1. For end-user workflows, see `docs/usage.md`.
 
 ## Stable display environments
 
@@ -13,24 +13,22 @@ This is the frozen public API contract for EqAnnotate v0.1. It is intentionally 
 - `\begin{annotatedmultline} ... \end{annotatedmultline}` — native amsmath multline-style first/last-row alignment, unnumbered by default.
 - `\begin{annotatedmultline}[numbered] ...` — one equation number for the whole multline block; `\label` / `\ref` works.
 
-`annotatedalign` and `annotatedgather` deliberately use one outer display number rather than reproducing native `align`/`gather` per-row numbering. `annotatedmultline` matches native multline's one-number model.
+`annotatedalign` and `annotatedgather` use one equation number for the complete block. `annotatedmultline` follows the same one-number model as amsmath `multline`.
 
 ## Stable declarations
 
 - `\eqmark[<color>]{<id>}{<math>}` — mark a target term. IDs must be unique within one annotated environment.
-  Common punctuation in semantic IDs is supported; IDs are mapped to private numeric TikZ node names rather than used as node syntax.
-- `\eqannotate[prefer=auto|above|below]{<id>}{<label>}` — declare an annotation. `prefer` is a soft side hint, never a coordinate.
+  Common punctuation in semantic IDs is supported because EqAnnotate maps each ID to a private numeric TikZ node name.
+- `\eqannotate[prefer=auto|above|below]{<id>}{<label>}` — declare an annotation. `prefer` is a soft side hint interpreted by the automatic layout solver.
 - `\eqannotatecolortheme{colorful|mono}` — select the color axis.
 - `\eqannotatecalloutstyle{leader|arrow}` — select the connector axis.
-- `\eqannotatemanual[<label node options>][<to-path options>]{<id>}{<label>}` — manual escape hatch for exceptional layouts. The second optional argument is advanced and may be omitted.
+- `\eqannotatemanual[<label node options>][<to-path options>]{<id>}{<label>}` — declare a manual annotation with explicit label and connector options. The second optional argument is advanced and may be omitted.
 
-## Manual fallback contract
+## Manual annotations
 
-Manual placement is a real fallback path, not a separate drawing that bypasses document integration. Manual labels inherit the active color theme and callout style, are rendered in the same final overlay pass as automatic labels, and contribute to `.aux`-based vertical space reservation.
+Manual labels are rendered in the same overlay pass as automatic labels and participate in theme selection, connector rendering, masking, and `.aux`-based vertical space reservation.
 
-The first optional argument is passed to the manual label node (for example `xshift`, `yshift`, `anchor`, or `text width`). The second optional argument is passed to TikZ's `to[...]` path (for example `bend left`, `bend right`, or `out` / `in`). If a target is declared with both `\eqannotate` and `\eqannotatemanual`, the manual declaration wins and a warning is emitted.
-
-Manual mode deliberately disables automatic collision avoidance, column clamping, lane assignment, and crossing optimization for that label. The caller has explicitly taken responsibility for those spatial decisions.
+The supplied label-node and `to[...]` path options determine the manual label geometry. The first optional argument is passed to the label node (for example `xshift`, `yshift`, `anchor`, or `text width`); the second is passed to TikZ's `to[...]` path (for example `bend left`, `bend right`, or `out` / `in`). If a target is declared with both `\eqannotate` and `\eqannotatemanual`, the manual declaration takes precedence and a warning is emitted.
 
 ## Guardrails
 
@@ -41,13 +39,13 @@ Manual mode deliberately disables automatic collision avoidance, column clamping
 - Long labels are automatically wrapped to a bounded fraction of the active `\linewidth`; measured multi-line height participates in lane spacing and vertical reservation.
 - amsmath measuring passes are detected and kept side-effect free, so native `multline` does not capture remembered nodes from its internal measuring copy.
 
-## Advanced tuning hooks: not frozen
+## Advanced tuning hooks
 
-Document-wide geometry constants such as label-width limits, lane spacing, route-track spacing, maximum automatic shift, target gap, and background-mask color remain advanced tuning hooks. Their names and exact defaults are not part of the v0.1 stability promise.
+Document-wide geometry constants such as label-width limits, lane spacing, route-track spacing, maximum automatic shift, target gap, and background-mask color are advanced tuning hooks and are not covered by the v0.1 stability contract.
 
-Per-label numeric coordinates, anchors, lane numbers, route-track IDs, and raw x/y shifts remain deliberately absent from the automatic path.
+## Current scope
 
-## Explicit v0.1 non-goals
+The v0.1 API does not include:
 
 - inline-math annotations;
 - native `align` semantics with a separate number on every row;

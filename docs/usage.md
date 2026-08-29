@@ -9,7 +9,7 @@ The normal workflow is:
 3. declare labels with `\eqannotate`;
 4. compile until positions stabilize.
 
-The automatic interface stays detail-free: no per-label coordinates, anchors, lane numbers, or route-track IDs are needed. This is convenient for human authors and particularly useful for coding/writing agents, because the agent can operate on semantic labels and symbolic LaTeX instead of solving a separate 2D placement problem.
+The automatic interface uses semantic target IDs and labels; placement, lanes, and connector routing are handled by EqAnnotate.
 
 ## Minimal example
 
@@ -59,16 +59,16 @@ These preferences keep automatic layout active while expressing which side is pr
 
 ## Agent-based workflows
 
-EqAnnotate is designed to keep the ordinary annotation interface semantic rather than geometric. A coding or writing agent only needs to identify the target term and provide the label:
+EqAnnotate keeps ordinary annotation edits focused on semantic targets and labels. A coding or writing agent identifies the target term and provides the label:
 
 ```latex
 \eqmark[blue]{velocity}{v_\theta(x,t)}
 \eqannotate{velocity}{Velocity field}
 ```
 
-This avoids asking the agent to choose low-level TikZ details such as coordinates, anchors, lane numbers, or connector paths. In practice, LLM-based agents are generally more reliable at natural-language intent and symbolic code editing than at iterative visual-coordinate tuning, so the reduced layout decision space makes agent-generated annotations more consistent.
+For coding and writing agents, the same declarative interface keeps edits focused on the target expression and annotation text while EqAnnotate handles layout.
 
-For agent projects, the repository includes [`skills/eqannotate/SKILL.md`](../skills/eqannotate/SKILL.md). The skill instructs the agent to use automatic layout first, compile to convergence, use side preferences sparingly, and reserve manual placement for difficult formulas.
+For agent projects, the repository includes [`skills/eqannotate/SKILL.md`](../skills/eqannotate/SKILL.md) with conventions for semantic IDs, convergence, side preferences, and manual placement.
 
 ## Display environments
 
@@ -230,15 +230,13 @@ EqAnnotate reports common authoring mistakes directly in the log:
 
 ## Colored page backgrounds
 
-Labels use a page-colored mask so connector segments passing beneath a label disappear rather than mixing with its text.
+Labels use a page-colored mask to hide connector segments that pass beneath label text.
 
 For a colored page:
 
 ```latex
 \renewcommand\eqannotatebackgroundcolor{<color>}
 ```
-
-Automatic background detection is on the roadmap.
 
 ## Roadmap
 

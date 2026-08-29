@@ -22,9 +22,8 @@ documents the stable v0.1.1 user interface.
 
 \section{Introduction}
 EqAnnotate is for \emph{display} equations. Its normal workflow is: mark a
-term, declare a label, then compile to convergence. It is automatic first,
-with a manual fallback for exceptional formulas. No shell escape, Python,
-network access, or external service is needed.
+term, declare a label, then compile to convergence. Automatic layout is the
+default workflow, with manual placement available when exact control is useful.
 
 \section{Installation}
 Place \texttt{eqannotate.sty} beside the main document and write:
@@ -32,6 +31,7 @@ Place \texttt{eqannotate.sty} beside the main document and write:
 \usepackage{eqannotate}
 \end{verbatim}
 For a user TeX tree, install it below \texttt{tex/latex/eqannotate/}.
+EqAnnotate runs entirely within LaTeX/TikZ.
 Requirements are LaTeX2e, \textsf{amsmath}, \textsf{xcolor}, TikZ with
 \texttt{tikzmark}, \texttt{arrows.meta}, and \texttt{calc}, plus
 \textsf{expl3}/\textsf{xparse}. The tested engines are pdfLaTeX, LuaLaTeX,
@@ -60,7 +60,8 @@ to one wrapper. Duplicate marks keep the first target and issue a warning.
 \begin{verbatim}
 \eqannotate[prefer=auto|above|below]{<id>}{<label>}
 \end{verbatim}
-The optional \texttt{prefer} value is a soft side preference, not a coordinate.
+The optional \texttt{prefer} value is a soft side preference interpreted by the
+automatic layout solver.
 A label with no matching mark is skipped with a warning.
 
 \section{Display environments}
@@ -111,9 +112,7 @@ supports the native commands \cmd{\shoveleft} and \cmd{\shoveright}.
 \section{Automatic layout}
 Automatic placement chooses sides, wraps long labels, performs bounded
 horizontal de-overlap, allocates lanes, routes connectors, observes the active
-local \cmd{\linewidth}, and reserves vertical space. These are layout
-strategies, not an unconditional promise that every imaginable document layout
-can be solved without intervention.
+local \cmd{\linewidth}, and reserves vertical space.
 
 \begin{annotatedequation}
 \mathcal{J}=\eqmark[blue]{data}{\mathcal{L}_{\rm data}}
@@ -137,12 +136,12 @@ and connectors share their colors. In \texttt{mono}, term backgrounds are
 removed and callouts are black. A \texttt{leader} is a plain connector; an
 \texttt{arrow} points toward the target.
 
-\section{Manual fallback}
+\section{Manual placement}
 \begin{verbatim}
 \eqannotatemanual[<label TikZ options>][<to-path options>]
   {<id>}{<label>}
 \end{verbatim}
-Use manual placement only when a formula needs exact control:
+Use manual placement when a formula benefits from exact control:
 \begin{annotatedequation}
 y=\eqmark[blue]{model}{f_\theta(x)}+\eqmark[orange]{correction}{\lambda g(x)}
 
@@ -150,15 +149,18 @@ y=\eqmark[blue]{model}{f_\theta(x)}+\eqmark[orange]{correction}{\lambda g(x)}
 \eqannotatemanual[xshift=18mm,yshift=12mm][bend right=18]
   {correction}{Manually positioned correction}
 \end{annotatedequation}
-Manual labels retain the theme, callout style, masking, and vertical reservation,
-but bypass automatic collision avoidance, column clamping, lane assignment, and
-crossing optimization for that label. A manual declaration wins over an
-automatic declaration for the same ID and emits a warning.
+In manual mode, the supplied TikZ options determine the label position and
+connector route. EqAnnotate continues to provide the active theme, callout
+style, label masking, and vertical space reservation. If automatic and manual
+declarations target the same ID, the manual declaration takes precedence and a
+warning is emitted.
 
 \section{Numbering and references}
-Each numbered wrapper has one outer number. Native per-row numbering for
-aligned/gathered wrappers and arbitrary custom \cmd{\tag} support are outside
-v0.1. Place \cmd{\label} inside a numbered wrapper and reference it normally.
+Numbered aligned and gathered wrappers use one equation number for the complete
+block. \texttt{annotatedmultline} follows the same one-number model as
+\textsf{amsmath} \texttt{multline}. Per-row numbering and custom \cmd{\tag}
+are not part of the current interface. Place \cmd{\label} inside a numbered
+wrapper and reference it normally.
 
 \section{Compilation and convergence}
 Use a normal workflow such as:
@@ -178,14 +180,14 @@ automatic/manual duplication, and commands used outside an EqAnnotate display.
 The last case is an explicit package error; the other authoring mistakes have
 readable warning behavior.
 
-\section{Known limitations and v0.1 boundaries}
-EqAnnotate does not annotate inline mathematics. v0.1 has no per-row numbering
-for multi-line wrappers, arbitrary \cmd{\tag}, or \cmd{\intertext}/
-\cmd{\shortintertext} inside its wrappers. On a non-white page, set:
+\section{Current scope}
+The current interface supports display equations and excludes inline
+annotations, per-row numbering for multi-line wrappers, arbitrary \cmd{\tag},
+and \cmd{\intertext}/\cmd{\shortintertext} inside its wrappers. Configure
+non-white page backgrounds explicitly:
 \begin{verbatim}
 \renewcommand\eqannotatebackgroundcolor{<color>}
 \end{verbatim}
-Automatic page-background detection is not provided.
 
 \section{Complete examples}
 The distribution includes the following runnable public-interface examples:
@@ -195,7 +197,6 @@ The distribution includes the following runnable public-interface examples:
 \item \texttt{examples/amsmath-gallery.tex}
 \item \texttt{examples/manual-gallery.tex}
 \end{itemize}
-They illustrate use of the public interface, not implementation knowledge.
 
 \section{License and project links}
 EqAnnotate is available under the MIT License. The

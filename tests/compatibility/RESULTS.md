@@ -45,7 +45,7 @@ PASS with pdfLaTeX for:
 
 The article-class compatibility corpus additionally runs with LuaLaTeX.
 
-## Manual fallback
+## Manual placement
 
 PASS:
 
@@ -59,14 +59,14 @@ PASS:
 - duplicate/missing manual declarations producing controlled warnings;
 - explicit error for manual use outside an EqAnnotate display.
 
-Manual labels intentionally bypass automatic collision avoidance, column clamping, lane assignment, and crossing optimization.
+Manual label-node and `to[...]` options determine placement and connector routes. Manual labels continue to use the active theme, callout style, masking, and vertical space reservation.
 
 ## Article-flow integration
 
-Visual PASS on full-page fixtures rather than isolated equation galleries:
+Visual PASS on full-page fixtures:
 
 - multi-page standard `article` with title/abstract/sections, numbered references, figure/table floats, consecutive annotated displays, long wrapped labels, aligned mathematics, and mixed automatic/manual placement;
-- standard two-column article with long labels, dense automatic annotations, and manual fallback;
+- standard two-column article with long labels, dense automatic annotations, and manual placement;
 - IEEEtran conference-style two-column article;
 - acmart sigconf-style two-column article;
 - automatic and manual annotation cases near page boundaries.
@@ -94,11 +94,11 @@ PASS:
 - `unicode-math` with LuaLaTeX and XeLaTeX, including the load order where `unicode-math` precedes EqAnnotate;
 - package-only project installation (`eqannotate.sty` beside `main.tex`) under pdfLaTeX, LuaLaTeX, and XeLaTeX;
 - LaTeX `\include` / `\includeonly` counter checkpointing, so cached annotation reserves keep stable environment IDs across partial builds;
-- convergence-based test execution: test documents must stabilize within five TeX runs rather than merely surviving a fixed number of passes.
+- convergence-based test execution: test documents stabilize within five TeX runs.
 
-EqAnnotate no longer loads `mathtools`; the only former use was a hidden multline-height phantom, which is now measured with amsmath's `gathered` while the visible output remains native `multline`. This removes a needless dependency and avoids a `mathtools`/`unicode-math` load-order warning.
+Hidden multline measurement uses amsmath's `gathered` environment, so the package does not require `mathtools` and remains compatible with the tested `unicode-math` load orders.
 
-## Deliberate v0.1 exclusions
+## Current v0.1 scope
 
 - inline math;
 - per-row numbering semantics of native `align` and native `gather`;

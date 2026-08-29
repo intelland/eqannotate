@@ -1,6 +1,6 @@
 # Layout model
 
-EqAnnotate treats annotation as a layout problem rather than a drawing command.
+EqAnnotate uses a layout model for declarative annotations.
 
 ## Pipeline
 
@@ -18,9 +18,9 @@ EqAnnotate treats annotation as a layout problem rather than a drawing command.
 
 ## Vertical spacing and target sites
 
-The annotation band is intentionally separated from the equation boundary. A routing corridor sits between the equation and the nearest label lane, leaving visible whitespace on both sides of the horizontal segment.
+The annotation band is separated from the equation boundary. A routing corridor sits between the equation and the nearest label lane, leaving visible whitespace on both sides of the horizontal segment.
 
-Arrow tips terminate outside the marked term rather than on the glyph. The upper target uses a small optical compensation because TeX math glyphs tend to sit visually closer to the north edge of their box than to the south edge; the result is visually symmetric top/bottom spacing rather than numerically identical offsets.
+Arrow tips terminate outside the marked term, clear of the glyph. The upper target uses a small optical compensation because TeX math glyphs tend to sit visually closer to the north edge of their box than to the south edge; the result gives visually symmetric top/bottom spacing with optically adjusted offsets.
 
 ## Callout routing
 
@@ -28,12 +28,12 @@ The label and formula are separate geometric objects. A connector begins at the 
 
 Two callout styles are shipped:
 
-- `leader`: no arrowhead; deliberately quiet and robust.
+- `leader`: no arrowhead; a quiet default.
 - `arrow`: an explicit arrowhead points toward the marked term.
 
 Connectors are rendered before labels. Label nodes use an invisible page-colored mask (white by default), so if a connector from an outer lane crosses behind another annotation, the covered segment disappears instead of mixing with the label text. The mask color can be changed with `\eqannotatebackgroundcolor` for non-white pages.
 
-This routing architecture is inspired in part by ScholarPhi's equation-diagram code, which separates label layout and leader generation and models label-side ports / feature-side sites. EqAnnotate does not copy ScholarPhi's JavaScript implementation; the TeX-side solver uses TikZ remembered nodes, TeX dimensions, and `.aux` state.
+ScholarPhi informed the separation between label layout and leader generation. EqAnnotate implements its layout using TikZ remembered nodes, TeX dimensions, and `.aux` state.
 
 ## Style separation
 
@@ -44,7 +44,7 @@ Color is not geometry. The package exposes independent switches:
 \eqannotatecalloutstyle{leader|arrow}
 ```
 
-The mathematical source and annotation declarations do not change when visual themes change.
+The mathematical source and annotation declarations stay unchanged when visual themes change.
 
 ## Column-aware bounded horizontal de-overlap
 
@@ -65,11 +65,11 @@ Each lane records the maximum measured label height. The next lane advances by `
 
 ## Crossing-aware relaxation
 
-Horizontal packing is still lane-based, but the reverse relaxation is no longer independent per lane. A global right-to-left center bound preserves target order across different lanes whenever that is compatible with column bounds, max-shift bounds, and same-lane collision spacing. This removes a class of avoidable leader crossings caused by two lanes independently moving labels past each other. When those constraints are mutually incompatible, collision-free placement takes priority and routing micro-tracks remain as the fallback.
+Horizontal packing is lane-based, and reverse relaxation applies a global right-to-left center bound across lanes. The bound preserves target order across different lanes whenever that is compatible with column bounds, max-shift bounds, and same-lane collision spacing. When those constraints are mutually incompatible, collision-free placement takes priority and routing micro-tracks separate connector motion.
 
 
 ## Native multline measuring passes
 
-Unlike boxed `aligned` / `gathered` math, amsmath's native `multline` performs an internal measuring pass before the final display is emitted. Running `\eqmark` normally in that pass can record a remembered node at the measuring-copy coordinates rather than the visible formula coordinates.
+amsmath's native `multline` performs an internal measuring pass before the final display is emitted. Running `\eqmark` in that pass can record a remembered node at the measuring-copy coordinates instead of the visible formula coordinates.
 
 EqAnnotate therefore treats amsmath's measuring pass as read-only: marked terms render with the same visual extent, but mark registration, annotation registration, manual callouts, and multline boundary sentinels are deferred to the final typesetting pass. The full multline vertical envelope is estimated from a boxed `gathered` phantom and anchored to remembered first/last-row sentinels; marked-term extents can only expand that envelope. This keeps annotation bands outside the entire multi-row formula while retaining native multline horizontal alignment.

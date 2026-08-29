@@ -10,7 +10,7 @@
 \usepackage{eqannotate}
 ```
 
-EqAnnotate is not yet published on CTAN. No shell escape, Python process, external service, or API key is required.
+EqAnnotate is available through GitHub Releases.
 
 ## User-wide TeX Live install
 
@@ -35,4 +35,4 @@ LuaLaTeX and XeLaTeX can be selected with `latexmk -lualatex` and `latexmk -xela
 
 ## Optional agent skill
 
-The package works without any agent integration. The repository includes [skills/eqannotate/SKILL.md](../skills/eqannotate/SKILL.md), an instruction-only guide for Codex-style workflows.
+The repository includes [skills/eqannotate/SKILL.md](../skills/eqannotate/SKILL.md), with conventions for Codex-style workflows.
