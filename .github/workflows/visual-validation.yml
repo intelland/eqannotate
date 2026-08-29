@@ -1,0 +1,49 @@
+name: Visual Validation
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  render-canonical-examples:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install TeX Live and rendering dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            latexmk \
+            poppler-utils \
+            texlive-latex-base \
+            texlive-latex-recommended \
+            texlive-latex-extra \
+            texlive-pictures \
+            texlive-publishers \
+            texlive-fonts-recommended \
+            texlive-luatex \
+            texlive-xetex
+      - name: Compile canonical examples
+        shell: bash
+        run: |
+          set -euo pipefail
+          export TEXINPUTS="${GITHUB_WORKSPACE}:"
+          mkdir -p visual-artifacts/png
+          for example in basic style-gallery manual-gallery amsmath-gallery article-integration; do
+            latexmk -pdf -interaction=nonstopmode -halt-on-error \
+              -outdir="visual-artifacts/${example}" "examples/${example}.tex"
+            pdftoppm -png -r 150 \
+              "visual-artifacts/${example}/${example}.pdf" \
+              "visual-artifacts/png/${example}"
+          done
+      - name: Upload visual validation previews
+        uses: actions/upload-artifact@v4
+        with:
+          name: eqannotate-visual-validation
+          path: visual-artifacts/png/*.png
+          if-no-files-found: error
