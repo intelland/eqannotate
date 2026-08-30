@@ -1,6 +1,6 @@
 ---
 name: eqannotate
-description: Use EqAnnotate to add declarative, self-layouting annotations to LaTeX display equations.
+description: Use EqAnnotate to add declarative, automatically laid-out annotations to LaTeX display equations.
 ---
 
 # EqAnnotate

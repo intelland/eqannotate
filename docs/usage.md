@@ -1,6 +1,6 @@
 # EqAnnotate User Guide
 
-EqAnnotate is a declarative package for annotated **display equations**. It is built on the equation-annotation workflow of [`annotate-equations`](https://github.com/st--/annotate-equations), with automatic self-layout as the default interaction.
+EqAnnotate is a declarative package for annotated **display equations**. It builds on the equation-annotation workflow of [`annotate-equations`](https://github.com/st--/annotate-equations) and uses automatic layout by default.
 
 The normal workflow is:
 
@@ -59,16 +59,14 @@ These preferences keep automatic layout active while expressing which side is pr
 
 ## Agent-based workflows
 
-EqAnnotate keeps ordinary annotation edits focused on semantic targets and labels. A coding or writing agent identifies the target term and provides the label:
+A coding or writing agent can annotate an expression by identifying the target term and providing its label:
 
 ```latex
 \eqmark[blue]{velocity}{v_\theta(x,t)}
 \eqannotate{velocity}{Velocity field}
 ```
 
-For coding and writing agents, the same declarative interface keeps edits focused on the target expression and annotation text while EqAnnotate handles layout.
-
-For agent projects, the repository includes [`skills/eqannotate/SKILL.md`](../skills/eqannotate/SKILL.md) with conventions for semantic IDs, convergence, side preferences, and manual placement.
+For agent-assisted projects, the repository includes [`skills/eqannotate/SKILL.md`](../skills/eqannotate/SKILL.md) with conventions for semantic IDs, convergence, side preferences, and manual placement.
 
 ## Display environments
 
@@ -110,7 +108,7 @@ x_{k+1} &= x_k+\eqmark[green]{step}{\alpha_kp_k}
 \end{annotatedalign}
 ```
 
-With `[numbered]`, the whole block receives one outer equation number.
+With `[numbered]`, the entire block receives one equation number.
 
 ### `annotatedgather`
 
@@ -130,24 +128,28 @@ With `[numbered]`, the whole block receives one number.
 
 ### `annotatedmultline`
 
-Long expressions with native amsmath multline-style first/last-row alignment:
+Use `annotatedmultline` for long expressions that need a line break. It retains amsmath's first/last-row alignment; use `annotatedalign` for short expressions that need aligned rows.
 
 ```latex
 \begin{annotatedmultline}
-A = \eqmark[blue]{head}{x_1+x_2+x_3+x_4} \\
-{} + x_5+x_6+x_7 \\
-{} + \eqmark[orange]{tail}{x_8+x_9}
+\eqmark[blue]{objective}{\mathcal{L}(\theta)}
+=\mathrm{E}_{x\sim p_{\rm data}}\!\left[\ell_{\rm rec}(x;\theta)\right]
++\eqmark[orange]{adversarial}{\lambda_1\mathrm{E}_{z\sim p(z)}\!\left[\ell_{\rm adv}(z;\theta)\right]}\\
+{}+\lambda_2\mathcal{L}_{\rm consistency}(\theta)
++\lambda_3\mathrm{E}_{t}\!\left[\|v_\theta(x_t,t)-u_t\|_2^2\right]
++\eqmark[green]{prior}{\lambda_4\mathcal{R}_{\rm prior}(\theta)}
 
-\eqannotate{head}{First contribution}
-\eqannotate{tail}{Final contribution}
+\eqannotate{objective}{Total training objective}
+\eqannotate{adversarial}{Adversarial objective}
+\eqannotate{prior}{Prior regularizer}
 \end{annotatedmultline}
 ```
 
-`\shoveleft` and `\shoveright` are supported. `[numbered]` follows the one-number model of amsmath `multline`.
+`\shoveleft` and `\shoveright` are supported. With `[numbered]`, the entire block receives one equation number, like amsmath `multline`.
 
 ## Themes and callout styles
 
-Color and connector geometry are independent axes:
+Theme and connector style can be selected independently:
 
 ```latex
 \eqannotatecolortheme{colorful} % or mono
@@ -156,7 +158,7 @@ Color and connector geometry are independent axes:
 
 - `colorful`: pastel term backgrounds plus corresponding colored labels/connectors.
 - `mono`: no term background; labels/connectors are black.
-- `leader`: no arrowhead; quiet default.
+- `leader`: plain connector without an arrowhead (the default).
 - `arrow`: arrowhead points toward the marked term.
 
 The four combinations can be switched without changing equation source or annotation declarations.
@@ -249,7 +251,7 @@ For a colored page:
 
 ## Choosing automatic vs manual
 
-Use `\eqannotate` for the default self-layouting path.
+Use `\eqannotate` for the automatic-layout workflow.
 
 Use `prefer=above|below` when you want to suggest a side while keeping the solver active.
 

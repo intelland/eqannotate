@@ -8,6 +8,7 @@
 *.pdf
 !/eqannotate.pdf
 /dist/ctan/
+/visualization/
 *.spl
 *Notes.bib
 *.nav

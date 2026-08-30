@@ -31,7 +31,6 @@ Place \texttt{eqannotate.sty} beside the main document and write:
 \usepackage{eqannotate}
 \end{verbatim}
 For a user TeX tree, install it below \texttt{tex/latex/eqannotate/}.
-EqAnnotate runs entirely within LaTeX/TikZ.
 Requirements are LaTeX2e, \textsf{amsmath}, \textsf{xcolor}, TikZ with
 \texttt{tikzmark}, \texttt{arrows.meta}, and \texttt{calc}, plus
 \textsf{expl3}/\textsf{xparse}. The tested engines are pdfLaTeX, LuaLaTeX,
@@ -72,8 +71,8 @@ Four wrappers are available:
 \item[\texttt{annotatedgather}] A centered multi-row display.
 \item[\texttt{annotatedmultline}] A long display split across rows.
 \end{description}
-They are unnumbered by default. Adding \texttt{[numbered]} gives the complete
-wrapper one outer equation number; ordinary \cmd{\label} and \cmd{\ref} work
+The wrappers are unnumbered by default. With \texttt{[numbered]}, the entire
+block receives one equation number; ordinary \cmd{\label} and \cmd{\ref} work
 as usual.
 
 \begin{annotatedalign}[numbered]
@@ -109,7 +108,7 @@ E(x)=\eqmark[blue]{energy}{D(x)}+R(x),\\
 \eqannotate{prior}{Prior regularizer}
 \end{annotatedmultline}
 The multline wrapper retains multline-style first/last-row alignment. Use
-\texttt{annotatedalign} for short expressions with a deliberately aligned break.
+\texttt{annotatedalign} for short expressions that need aligned rows.
 It also supports the native commands \cmd{\shoveleft} and \cmd{\shoveright}.
 
 \section{Automatic layout}
@@ -144,7 +143,7 @@ removed and callouts are black. A \texttt{leader} is a plain connector; an
 \eqannotatemanual[<label TikZ options>][<to-path options>]
   {<id>}{<label>}
 \end{verbatim}
-Use manual placement when a formula benefits from exact control:
+Use manual placement to set a label position or connector route explicitly:
 \begin{annotatedequation}
 y=\eqmark[blue]{model}{f_\theta(x)}+\eqmark[orange]{correction}{\lambda g(x)}
 
@@ -152,17 +151,15 @@ y=\eqmark[blue]{model}{f_\theta(x)}+\eqmark[orange]{correction}{\lambda g(x)}
 \eqannotatemanual[xshift=18mm,yshift=12mm][bend right=18]
   {correction}{Manually positioned correction}
 \end{annotatedequation}
-In manual mode, the supplied TikZ options determine the label position and
-connector route. EqAnnotate continues to provide the active theme, callout
-style, label masking, and vertical space reservation. If automatic and manual
-declarations target the same ID, the manual declaration takes precedence and a
-warning is emitted.
+The supplied TikZ options set the label position and connector route. Manual
+labels use the active theme, callout style, masking, and vertical space
+reservation. If automatic and manual declarations target the same ID, the
+manual declaration takes precedence and the package emits a warning.
 
 \section{Numbering and references}
-Numbered aligned and gathered wrappers use one equation number for the complete
-block. \texttt{annotatedmultline} follows the same one-number model as
-\textsf{amsmath} \texttt{multline}. Per-row numbering and custom \cmd{\tag}
-are not part of the current interface. Place \cmd{\label} inside a numbered
+Numbered aligned and gathered wrappers give the entire block one equation
+number. \texttt{annotatedmultline} follows the same one-number model as
+\textsf{amsmath} \texttt{multline}. Place \cmd{\label} inside a numbered
 wrapper and reference it normally.
 
 \section{Compilation and convergence}
@@ -180,8 +177,8 @@ document commonly needs multiple passes.
 \section{Diagnostics}
 Diagnostics cover a missing mark, duplicate mark, duplicate annotation,
 automatic/manual duplication, and commands used outside an EqAnnotate display.
-The last case is an explicit package error; the other authoring mistakes have
-readable warning behavior.
+Commands used outside a display produce an explicit package error. Other
+authoring mistakes produce warnings.
 
 \section{Current scope}
 The current interface supports display equations and excludes inline

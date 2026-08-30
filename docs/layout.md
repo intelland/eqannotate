@@ -28,7 +28,7 @@ The label and formula are separate geometric objects. A connector begins at the 
 
 Two callout styles are shipped:
 
-- `leader`: no arrowhead; a quiet default.
+- `leader`: plain connector without an arrowhead (the default).
 - `arrow`: an explicit arrowhead points toward the marked term.
 
 Connectors are rendered before labels. Label nodes use an invisible page-colored mask (white by default), so if a connector from an outer lane crosses behind another annotation, the covered segment disappears instead of mixing with the label text. The mask color can be changed with `\eqannotatebackgroundcolor` for non-white pages.

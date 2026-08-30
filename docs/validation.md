@@ -48,6 +48,6 @@ Each page is rendered to PNG at 150 DPI and uploaded as the `eqannotate-visual-v
 
 The tag-triggered release workflow runs the core and compatibility suites, verifies that the tag, package header, and changelog version agree, and creates the release asset from the exact tagged `eqannotate.sty` file.
 
-## Current status
+## Status
 
-The v0.1.1 regression, compatibility, and visual-validation gates pass.
+GitHub Actions runs regression, compatibility, and visual validation on every push and pull request. See the [Actions page](https://github.com/intelland/eqannotate/actions) for current results.

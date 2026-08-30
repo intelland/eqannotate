@@ -10,7 +10,7 @@
 
 > Tell EqAnnotate what to label, not where to put the label.
 
-EqAnnotate is a self-layouting LaTeX package for annotated display equations. Mark a mathematical term, declare its label, and let the package handle placement, wrapping, spacing, de-overlap, lane allocation, and connector routing.
+EqAnnotate is a LaTeX package that automatically lays out annotations for display equations. Mark a mathematical term, declare its label, and let the package handle placement, wrapping, spacing, de-overlap, lane allocation, and connector routing.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/intelland/eqannotate/main/docs/images/hero-complex.png"
@@ -18,7 +18,7 @@ EqAnnotate is a self-layouting LaTeX package for annotated display equations. Ma
        width="900">
 </p>
 
-EqAnnotate keeps the source focused on mathematical meaning while automatically arranging a genuinely dense annotation set.
+EqAnnotate keeps the source focused on mathematical meaning while arranging dense annotations.
 
 ```latex
 \begin{annotatedequation}
@@ -47,19 +47,15 @@ EqAnnotate keeps the source focused on mathematical meaning while automatically 
        width="1000">
 </p>
 
-[`annotate-equations`](https://github.com/st--/annotate-equations) established a convenient TikZ-based workflow for annotated equations and is the direct foundation/predecessor of EqAnnotate. EqAnnotate moves the common workflow one abstraction level higher: the caller declares the target and label, while the layout solver handles placement, wrapping, de-overlap, lane allocation, column bounds, and connector routing.
+[`annotate-equations`](https://github.com/st--/annotate-equations) established a TikZ-based workflow for annotated equations. EqAnnotate builds on that approach: authors declare targets and labels while the layout solver handles placement, wrapping, de-overlap, lane allocation, column bounds, and connector routing.
 
-The difference is the abstraction level: EqAnnotate keeps the common annotation workflow declarative, with placement and routing handled by the layout solver.
-
-## Why this matters for humans and agents
+## For authors and agents
 
 For human authors, fewer coordinates and TikZ adjustments mean shorter, more maintainable source and a more consistent annotation style.
 
-For coding and writing agents, the useful decisions are semantic: which term matters, what it means, and what its label should say. EqAnnotate handles the associated placement, lane allocation, and connector routing.
+For coding and writing agents, the relevant decisions are semantic: which term matters, what it means, and what its label should say. EqAnnotate handles the associated placement, lane allocation, and connector routing.
 
-> In normal use, both humans and agents specify what a term means; EqAnnotate decides where the annotation goes.
-
-The optional [EqAnnotate skill](https://github.com/intelland/eqannotate/tree/main/skills/eqannotate) guides Codex- and Claude Code-style workflows toward automatic layout, convergence checks, and manual placement when exact control is useful. EqAnnotate itself is a LaTeX/TikZ package; the agent skill is optional.
+The optional [EqAnnotate skill](https://github.com/intelland/eqannotate/tree/main/skills/eqannotate) documents conventions for semantic IDs, convergence checks, side preferences, and manual placement in Codex- and Claude Code-style workflows. EqAnnotate itself is a LaTeX/TikZ package; the skill is optional.
 
 ## Release information
 
@@ -119,7 +115,7 @@ Automatic labels measure and wrap themselves, respect the active `\linewidth`, r
 - [ ] Improved non-white-background handling
 - [ ] CTAN distribution
 
-For a colored page today, set `\eqannotatebackgroundcolor` to the page color.
+For non-white page backgrounds, set `\eqannotatebackgroundcolor` to the page color.
 
 ## Documentation
 
@@ -132,9 +128,9 @@ For a colored page today, set `\eqannotatebackgroundcolor` to the page color.
 
 ## Acknowledgements
 
-EqAnnotate builds directly on the annotated-equation workflow and TikZ techniques demonstrated by [`annotate-equations`](https://github.com/st--/annotate-equations), adding a lower-configuration self-layouting layer.
+EqAnnotate builds on the annotated-equation workflow and TikZ techniques demonstrated by [`annotate-equations`](https://github.com/st--/annotate-equations), adding automatic layout with fewer placement decisions.
 
-It also draws inspiration from [`annotated_latex_equations`](https://github.com/synercys/annotated_latex_equations) for colorful annotated-equation presentation. [`ScholarPhi`](https://github.com/allenai/scholarphi) was an engineering reference for separating label measurement, placement, and leader routing.
+It also draws inspiration from [`annotated_latex_equations`](https://github.com/synercys/annotated_latex_equations) for colorful annotated-equation presentation. [`ScholarPhi`](https://github.com/allenai/scholarphi) informed the separation of label measurement, placement, and leader routing.
 
 Thank you to the LaTeX ecosystem around PGF/TikZ, `tikzmark`, and `amsmath`.
 

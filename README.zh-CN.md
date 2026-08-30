@@ -10,7 +10,7 @@
 
 > 告诉 EqAnnotate 要标注什么，而不是标签应该放在哪里。
 
-EqAnnotate 是一个为带标注行间公式提供自动布局的 LaTeX 宏包。标记数学项并声明标签后，宏包会处理位置、换行、间距、避让、分层和连接线路由。
+EqAnnotate 是一个为带说明标签的行间公式自动安排布局的 LaTeX 宏包。标记数学项并声明标签后，宏包会处理位置、换行、间距、避让、分层和连接线路由。
 
 <p align="center">
   <img src="docs/images/hero-complex.png"
@@ -18,7 +18,7 @@ EqAnnotate 是一个为带标注行间公式提供自动布局的 LaTeX 宏包�
        width="900">
 </p>
 
-EqAnnotate 让源代码聚焦于数学含义，同时自动安排一组密集的公式标注。
+EqAnnotate 让源代码聚焦于数学含义，并自动安排密集的公式标注。
 
 ```latex
 \begin{annotatedequation}
@@ -39,7 +39,7 @@ EqAnnotate 让源代码聚焦于数学含义，同时自动安排一组密集的
 \end{annotatedequation}
 ```
 
-## 同样的标注意图，更少的空间决策
+## 同样的标注意图，更少的布局决策
 
 <p align="center">
   <img src="docs/images/layout-comparison.png"
@@ -47,19 +47,15 @@ EqAnnotate 让源代码聚焦于数学含义，同时自动安排一组密集的
        width="1000">
 </p>
 
-[`annotate-equations`](https://github.com/st--/annotate-equations) 提供了方便的 TikZ 公式标注工作流，也是 EqAnnotate 的直接基础。EqAnnotate 将常见工作流提升到更高的抽象层次：调用者声明目标和标签，布局器处理位置、换行、避让、分层、列边界和连接线路由。
+[`annotate-equations`](https://github.com/st--/annotate-equations) 提供了 TikZ 公式标注工作流。EqAnnotate 在此基础上让作者声明目标和标签，再由布局器处理位置、换行、避让、分层、列边界和连接线路由。
 
-核心区别在于抽象层次：EqAnnotate 保持常见标注工作流的声明式表达，由布局器处理位置和路由。
-
-## 对作者和 Agent 的意义
+## 面向作者和 Agent
 
 对作者而言，更少的坐标微调意味着更短、更容易维护的 LaTeX 源码，也让整篇文档的标注风格更一致。
 
-对 Codex、Claude Code 等编程和写作 Agent 而言，重要的决策在语义层面：哪些项重要、它们表示什么、标签如何表述。位置、分层和连接线路由属于二维布局任务，由 EqAnnotate 处理。
+对 Codex、Claude Code 等编程和写作 Agent 而言，重要的决策在语义层面：哪些项重要、它们表示什么、标签如何表述。布局细节由 EqAnnotate 处理。
 
-> 在通常用法中，人和 Agent 都只说明一个公式项的含义；EqAnnotate 决定标注放在哪里。
-
-可选的 [EqAnnotate Agent Skill](skills/eqannotate/SKILL.md) 为 Codex、Claude Code 等工作流提供自动布局、收敛检查和手动放置指导。EqAnnotate 本身是 LaTeX/TikZ 宏包；Agent Skill 为可选项。
+可选的 [EqAnnotate Agent Skill](skills/eqannotate/SKILL.md) 为 Codex、Claude Code 等工作流提供语义 ID、收敛检查、侧边偏好和手动放置的使用指引。EqAnnotate 本身是 LaTeX/TikZ 宏包；该 Skill 为可选项。
 
 ## 发布信息
 
@@ -115,7 +111,7 @@ EqAnnotate 让源代码聚焦于数学含义，同时自动安排一组密集的
 - [ ] 更好的非白色背景处理
 - [ ] CTAN 发布
 
-如需使用彩色页面，请将 `\eqannotatebackgroundcolor` 设置为页面颜色。
+页面背景不是白色时，请将 `\eqannotatebackgroundcolor` 设置为相应的背景色。
 
 ## 文档
 
@@ -128,9 +124,9 @@ EqAnnotate 让源代码聚焦于数学含义，同时自动安排一组密集的
 
 ## 致谢
 
-EqAnnotate 建立在 [`annotate-equations`](https://github.com/st--/annotate-equations) 展示的公式标注工作流与 TikZ 技术之上，并增加了低配置的自动布局层。
+EqAnnotate 建立在 [`annotate-equations`](https://github.com/st--/annotate-equations) 展示的公式标注工作流与 TikZ 技术之上，并加入自动布局以减少手动位置配置。
 
-[`annotated_latex_equations`](https://github.com/synercys/annotated_latex_equations) 的彩色公式标注示例为本项目的视觉表达提供了启发。[`ScholarPhi`](https://github.com/allenai/scholarphi) 为分离标签测量、布局和引线生成提供了工程参考。
+[`annotated_latex_equations`](https://github.com/synercys/annotated_latex_equations) 的彩色公式标注示例为本项目的视觉表达提供了启发。[`ScholarPhi`](https://github.com/allenai/scholarphi) 为标签测量、布局和引线生成的分离提供了工程参考。
 
 感谢 PGF/TikZ、`tikzmark` 与 `amsmath` 等 LaTeX 生态项目。
 

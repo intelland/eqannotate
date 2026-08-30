@@ -12,14 +12,12 @@
 
 3. Compile and visually inspect representative examples (`basic`, `style-gallery`, `manual-gallery`, `amsmath-gallery`, and `article-integration`).
 4. Verify `eqannotate.sty`, `CHANGELOG.md`, and release notes agree on version/date.
-5. Verify no generated `.aux`, `.log`, `.pdf`, `.fls`, `.fdb_latexmk`, or similar build files are tracked.
+5. Verify no generated TeX by-products (`.aux`, `.log`, `.fls`, `.fdb_latexmk`, or similar) are tracked. The root `eqannotate.pdf` is the versioned canonical manual.
 6. Verify GitHub Actions CI is green on the release commit.
 
 ## GitHub Release asset rule
 
-Every GitHub Release must include a standalone `eqannotate.sty` asset extracted from the exact release tag. Never upload the current `main` copy to an older release: it may contain later development or bug-fix changes.
-
-For example, extract `eqannotate.sty` from the release tag, upload that file to the matching GitHub Release, and verify its package header/version before publishing the release.
+Every GitHub Release includes a standalone `eqannotate.sty` asset extracted from its matching tag. Verify the package header and version before publishing.
 
 ## CTAN
 
