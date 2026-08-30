@@ -97,17 +97,20 @@ E(x)=\eqmark[blue]{energy}{D(x)}+R(x),\\
 \end{annotatedgather}
 
 \begin{annotatedmultline}
-\mathcal{L}(\theta)=\eqmark[blue]{reconstruction}{\lambda_1\mathcal{L}_{\rm rec}}
-{}+\eqmark[orange]{adversarial}{\lambda_2\mathcal{L}_{\rm adv}}\\
-{}+\lambda_3\mathcal{L}_{\rm cyc}
-{}+\eqmark[green]{prior}{\lambda_4\mathcal{R}(\theta)}
+\eqmark[blue]{objective}{\mathcal{L}(\theta)}
+=\mathrm{E}_{x\sim p_{\rm data}}\!\left[\ell_{\rm rec}(x;\theta)\right]
++\eqmark[orange]{adversarial}{\lambda_1\mathrm{E}_{z\sim p(z)}\!\left[\ell_{\rm adv}(z;\theta)\right]}\\
+{}+\lambda_2\mathcal{L}_{\rm consistency}(\theta)
++\lambda_3\mathrm{E}_{t}\!\left[\|v_\theta(x_t,t)-u_t\|_2^2\right]
++\eqmark[green]{prior}{\lambda_4\mathcal{R}_{\rm prior}(\theta)}
 
-\eqannotate{reconstruction}{Reconstruction term}
-\eqannotate{adversarial}{Adversarial term}
+\eqannotate{objective}{Total training objective}
+\eqannotate{adversarial}{Adversarial objective}
 \eqannotate{prior}{Prior regularizer}
 \end{annotatedmultline}
-The multline wrapper retains multline-style first/last-row alignment. It also
-supports the native commands \cmd{\shoveleft} and \cmd{\shoveright}.
+The multline wrapper retains multline-style first/last-row alignment. Use
+\texttt{annotatedalign} for short expressions with a deliberately aligned break.
+It also supports the native commands \cmd{\shoveleft} and \cmd{\shoveright}.
 
 \section{Automatic layout}
 Automatic placement chooses sides, wraps long labels, performs bounded
