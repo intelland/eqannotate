@@ -15,10 +15,14 @@ jobs:
     steps:
       - name: Check out tagged commit
         uses: actions/checkout@v4
-      - name: Install TeX Live test dependencies
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+      - name: Install TeX Live and packaging dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
+            zip unzip \
             latexmk texlive-latex-base texlive-latex-recommended \
             texlive-latex-extra texlive-pictures texlive-publishers \
             texlive-fonts-recommended texlive-luatex texlive-xetex
@@ -26,20 +30,58 @@ jobs:
         run: ./tests/run.sh
       - name: Run compatibility gate
         run: ./tests/compatibility/run.sh
-      - name: Verify release metadata
+      - name: Validate release metadata and extract notes
+        id: release_metadata
         shell: bash
         run: |
           set -euo pipefail
           TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
           PKG_VERSION="$(sed -n 's/.*\\ProvidesPackage{eqannotate}\[[^ ]* \(v[^ ]*\) .*/\1/p' eqannotate.sty)"
           test -n "${PKG_VERSION}"
           test "${TAG}" = "${PKG_VERSION}"
-          grep -Fq "## ${TAG#v} " CHANGELOG.md
+          test "$(git rev-parse HEAD)" = "$(git rev-parse "${TAG}^{commit}")"
+
+          HEADING_COUNT="$(awk -v version="${VERSION}" '/^##[[:space:]]/ && $2 == version { count++ } END { print count + 0 }' CHANGELOG.md)"
+          if [ "${HEADING_COUNT}" -ne 1 ]; then
+            echo "::error::Expected exactly one CHANGELOG heading for ${TAG}" >&2
+            exit 1
+          fi
+
+          NOTES_FILE="${RUNNER_TEMP}/eqannotate-release-notes.md"
+          awk -v version="${VERSION}" '
+            /^##[[:space:]]/ && $2 == version { found = 1; next }
+            found && /^##[[:space:]]/ { exit }
+            found { print }
+            END { if (!found) exit 42 }
+          ' CHANGELOG.md > "${NOTES_FILE}"
+          if ! grep -q '[^[:space:]]' "${NOTES_FILE}"; then
+            echo "::error::CHANGELOG section for ${TAG} has no release notes" >&2
+            exit 1
+          fi
+          printf 'notes_file=%s\n' "${NOTES_FILE}" >> "${GITHUB_OUTPUT}"
+      - name: Build CTAN package
+        run: scripts/build-ctan-package.sh
+      - name: Verify built release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code
+          for asset in eqannotate.sty eqannotate.pdf dist/ctan/eqannotate-ctan.zip; do
+            test -s "${asset}" || {
+              echo "::error::Missing or empty release asset: ${asset}" >&2
+              exit 1
+            }
+          done
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          gh release create "${GITHUB_REF_NAME}" eqannotate.sty \
+          gh release create "${GITHUB_REF_NAME}" \
+            eqannotate.sty \
+            eqannotate.pdf \
+            dist/ctan/eqannotate-ctan.zip \
+            --verify-tag \
             --title "EqAnnotate ${GITHUB_REF_NAME}" \
-            --notes "EqAnnotate ${GITHUB_REF_NAME} is a maintenance release. It fixes captured display bodies containing blank source lines, adds regression coverage for that authoring style, and makes GitHub Release assets reproducible from the exact release tag. The v0.1 public API and layout behavior are otherwise unchanged."
+            --notes-file "${{ steps.release_metadata.outputs.notes_file }}"
